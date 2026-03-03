@@ -1,0 +1,7 @@
+/* 基础重置，主题与字体由 App.vue 统一管理 */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+}
