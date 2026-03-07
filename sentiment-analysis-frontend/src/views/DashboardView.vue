@@ -3,6 +3,7 @@
     <h2 class="page-title">数据看板</h2>
 
     <div class="card">
+      <h3 class="card-title">筛选条件</h3>
       <div class="filter-row">
         <div class="filter-item">
           <label>选择商品</label>
@@ -23,8 +24,6 @@
         </div>
         <div class="filter-item filter-actions">
           <button @click="loadProductData" class="btn btn-primary">查询</button>
-        </div>
-        <div class="filter-item filter-actions">
           <button @click="resetFilters" class="btn btn-secondary">重置</button>
         </div>
       </div>
@@ -701,54 +700,6 @@ export default {
   flex-direction: column;
   gap: var(--space-2);
   min-width: 150px;
-}
-
-.filter-item label {
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-}
-
-.filter-actions {
-  display: flex;
-  gap: var(--space-2);
-}
-
-.select-field,
-.input-field {
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  background: var(--input-bg);
-  color: var(--text-primary);
-  font-size: var(--font-size-sm);
-}
-
-.btn {
-  padding: var(--space-2) var(--space-4);
-  border: none;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  font-size: var(--font-size-sm);
-  transition: all 0.2s;
-}
-
-.btn-primary {
-  background: var(--primary-color);
-  color: white;
-}
-
-.btn-primary:hover {
-  background: var(--primary-hover);
-}
-
-.btn-secondary {
-  background: var(--input-bg);
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
-}
-
-.btn-secondary:hover {
-  background: var(--border-color);
 }
 
 .stats-grid {

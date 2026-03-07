@@ -6,7 +6,7 @@
       <h3 class="card-title">筛选条件</h3>
       <div class="filter-row">
         <div class="filter-item">
-          <label>商品</label>
+          <label>选择商品</label>
           <select v-model="filters.productId" @change="loadReviews" class="select-field">
             <option value="">全部商品</option>
             <option v-for="p in products" :key="p.id" :value="p.id">
@@ -45,7 +45,7 @@
           </select>
         </div>
         <div class="filter-item filter-actions">
-          <button @click="resetFilters" class="btn btn-secondary btn-sm">重置</button>
+          <button @click="resetFilters" class="btn btn-secondary">重置</button>
         </div>
       </div>
     </div>
@@ -106,13 +106,21 @@
               <span v-else>-</span>
             </td>
             <td>{{ formatDate(review.uploadTime) }}</td>
-            <td>
-              <button @click="openEditModal(review)" class="btn btn-outline btn-sm" title="修正标签">
-                修正
-              </button>
-              <button @click="deleteReview(review.id)" class="btn btn-danger btn-sm" title="删除">
-                删除
-              </button>
+            <td class="actions-cell">
+              <div class="dropdown" :class="{ 'dropdown-open': openDropdownId === review.id }">
+                <button @click="toggleDropdown(review.id)" class="btn btn-outline btn-sm dropdown-btn">
+                  操作 ▼
+                </button>
+                <div class="dropdown-menu">
+                  <button @click="openEditModal(review); closeDropdown()" class="dropdown-item">
+                    ✏️ 修正标签
+                  </button>
+                  <div class="dropdown-divider"></div>
+                  <button @click="deleteReview(review.id); closeDropdown()" class="dropdown-item dropdown-danger">
+                    🗑️ 删除
+                  </button>
+                </div>
+              </div>
             </td>
           </tr>
         </tbody>
@@ -268,7 +276,8 @@ export default {
       editingReview: { id: null, content: '' },
       editingSentiment: 1,
       unanalyzedCount: 0,
-      analyzing: false
+      analyzing: false,
+      openDropdownId: null
     };
   },
   async mounted() {
@@ -573,6 +582,14 @@ export default {
           this.showMessage('删除失败', 'error');
         }
       })();
+    },
+
+    toggleDropdown(id) {
+      this.openDropdownId = this.openDropdownId === id ? null : id;
+    },
+
+    closeDropdown() {
+      this.openDropdownId = null;
     }
   }
 };
@@ -591,27 +608,6 @@ export default {
   color: var(--primary-color);
 }
 
-.card {
-  background: var(--card-bg);
-  border-radius: var(--radius-lg);
-  padding: var(--space-6);
-  margin-bottom: var(--space-6);
-  border: 1px solid var(--border-color);
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-4);
-}
-
-.card-title {
-  margin: 0;
-  font-size: var(--font-size-md);
-  color: var(--text-primary);
-}
-
 .unanalyzed-badge {
   display: inline-block;
   margin-left: 10px;
@@ -621,62 +617,6 @@ export default {
   border-radius: 12px;
   font-size: 12px;
   font-weight: 500;
-}
-
-.filter-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-4);
-  align-items: flex-end;
-}
-
-.filter-item {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  min-width: 140px;
-}
-
-.filter-item label {
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-}
-
-.filter-actions {
-  margin-left: auto;
-}
-
-.select-field,
-.input-field {
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  background: var(--input-bg);
-  color: var(--text-primary);
-  font-size: var(--font-size-sm);
-}
-
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: var(--space-4);
-}
-
-.data-table th,
-.data-table td {
-  padding: var(--space-3);
-  text-align: left;
-  border-bottom: 1px solid var(--divider-color);
-  font-size: var(--font-size-sm);
-}
-
-.data-table th {
-  color: var(--text-secondary);
-  font-weight: 600;
-}
-
-.data-table .col-actions {
-  width: 120px;
 }
 
 .content-cell {
@@ -709,105 +649,6 @@ export default {
   color: #9e9e9e;
 }
 
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: var(--space-4);
-  margin-top: var(--space-4);
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--divider-color);
-}
-
-.page-info {
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
-}
-
-.btn {
-  padding: var(--space-2) var(--space-4);
-  border: none;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  font-size: var(--font-size-sm);
-  transition: all 0.2s;
-}
-
-.btn-primary {
-  background: var(--primary-color);
-  color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: var(--primary-hover);
-}
-
-.btn-secondary {
-  background: var(--input-bg);
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background: var(--border-color);
-}
-
-.btn-outline {
-  background: transparent;
-  color: var(--primary-color);
-  border: 1px solid var(--primary-color);
-}
-
-.btn-outline:hover {
-  background: var(--primary-color);
-  color: white;
-}
-
-.btn-danger {
-  background: var(--danger-color);
-  color: white;
-}
-
-.btn-danger:hover {
-  background: var(--danger-hover);
-}
-
-.btn-sm {
-  padding: var(--space-1) var(--space-2);
-  font-size: 12px;
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.center-text {
-  text-align: center;
-  padding: var(--space-10) 0;
-  color: var(--text-secondary);
-}
-
-.empty-state {
-  text-align: center;
-  padding: var(--space-10) 0;
-  color: var(--text-muted);
-}
-
-.spinner {
-  width: 24px;
-  height: 24px;
-  border: 3px solid rgba(76, 175, 80, 0.3);
-  border-top-color: var(--primary-color);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto var(--space-3);
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
 .alert {
   padding: var(--space-3);
   border-radius: var(--radius-sm);
@@ -828,29 +669,6 @@ export default {
   color: white;
 }
 
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal {
-  background: var(--card-bg);
-  border-radius: var(--radius-lg);
-  padding: var(--space-6);
-  min-width: 400px;
-  max-width: 90vw;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
 .modal-large {
   min-width: 600px;
 }
@@ -860,12 +678,6 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--space-4);
-}
-
-.modal-title {
-  margin: 0;
-  font-size: var(--font-size-lg);
-  color: var(--text-primary);
 }
 
 .close-btn {
@@ -983,11 +795,5 @@ export default {
   border-color: var(--danger-color);
   background: rgba(244, 67, 54, 0.1);
   color: var(--danger-color);
-}
-
-.modal-actions {
-  display: flex;
-  gap: var(--space-3);
-  justify-content: flex-end;
 }
 </style>

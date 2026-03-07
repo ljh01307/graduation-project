@@ -146,13 +146,6 @@ export default {
   margin-top: var(--space-2);
 }
 
-.card {
-  background: var(--card-bg);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--card-shadow);
-  padding: var(--space-6);
-  border: 1px solid var(--border-color);
-}
 .card h2 {
   color: var(--text-primary);
   margin: 0 0 var(--space-5) 0;
@@ -165,21 +158,19 @@ export default {
   gap: var(--space-3);
   margin-bottom: var(--space-4);
 }
+
 .input-field {
   flex: 1;
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
   font-size: var(--font-size-base);
   line-height: var(--line-height-normal);
-  background-color: var(--input-bg);
-  color: var(--text-primary);
   outline: none;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
+
 .input-field::placeholder {
   color: var(--text-muted);
 }
+
 .input-field:focus {
   border-color: var(--primary-color);
   box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
@@ -191,6 +182,7 @@ export default {
   gap: var(--space-2);
   margin-bottom: var(--space-5);
 }
+
 .example-btn {
   padding: var(--space-2) var(--space-3);
   background-color: var(--input-bg);
@@ -202,6 +194,7 @@ export default {
   cursor: pointer;
   transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
 }
+
 .example-btn:hover {
   background-color: #3a3a3a;
   color: var(--primary-color);
@@ -210,20 +203,9 @@ export default {
 
 .btn {
   padding: var(--space-3) var(--space-5);
-  border: none;
-  border-radius: var(--radius-sm);
   font-size: var(--font-size-base);
   line-height: var(--line-height-normal);
   font-weight: 500;
-  cursor: pointer;
-  transition: background-color var(--transition-fast);
-}
-.btn-primary {
-  background-color: var(--primary-color);
-  color: white;
-}
-.btn-primary:hover {
-  background-color: var(--primary-hover);
 }
 
 .result-card {
@@ -231,41 +213,36 @@ export default {
   padding-top: var(--space-5);
   border-top: 1px solid var(--divider-color);
 }
+
 .result-card h3 {
   color: var(--primary-color);
   margin: 0 0 var(--space-4) 0;
   font-size: var(--font-size-md);
   font-weight: 600;
 }
+
 .result-item {
   display: flex;
   margin-bottom: var(--space-3);
 }
+
 .label {
   color: var(--text-secondary);
   width: 100px;
   font-size: var(--font-size-sm);
 }
+
 .value {
   color: var(--text-primary);
   font-weight: 500;
   font-size: var(--font-size-base);
 }
+
 .positive {
   color: var(--primary-color) !important;
 }
+
 .negative {
   color: var(--danger-color) !important;
-}
-
-.alert-error {
-  background-color: rgba(244, 67, 54, 0.12);
-  color: #ef5350;
-  padding: var(--space-3);
-  border-radius: var(--radius-sm);
-  margin-top: var(--space-4);
-  border-left: 4px solid var(--danger-color);
-  font-size: var(--font-size-sm);
-  line-height: var(--line-height-normal);
 }
 </style>

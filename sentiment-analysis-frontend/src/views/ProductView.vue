@@ -33,7 +33,7 @@
           </select>
         </div>
         <div class="filter-item filter-actions">
-          <button @click="resetFilters" class="btn btn-secondary btn-sm">重置</button>
+          <button @click="resetFilters" class="btn btn-secondary">重置</button>
         </div>
       </div>
     </div>
@@ -381,64 +381,15 @@ export default {
   color: var(--primary-color);
 }
 
-.card {
-  background: var(--card-bg);
-  border-radius: var(--radius-lg);
-  padding: var(--space-6);
-  margin-bottom: var(--space-6);
-  border: 1px solid var(--border-color);
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-4);
-}
-
-.card-title {
-  margin: 0;
-  font-size: var(--font-size-md);
-  color: var(--text-primary);
-}
 
 .card-actions {
   display: flex;
   gap: var(--space-2);
 }
 
-.filter-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-4);
-  align-items: flex-end;
-}
-
-.filter-item {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  min-width: 140px;
-}
-
-.filter-item label {
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-}
-
 .filter-actions {
   display: flex;
   gap: var(--space-2);
-}
-
-.select-field,
-.input-field {
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  background: var(--input-bg);
-  color: var(--text-primary);
-  font-size: var(--font-size-sm);
 }
 
 .select-field {
@@ -458,83 +409,6 @@ export default {
 .add-form {
   display: flex;
   gap: var(--space-3);
-}
-
-.btn {
-  padding: var(--space-2) var(--space-4);
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.btn-primary {
-  background-color: var(--primary-color);
-  color: white;
-}
-
-.btn-primary:hover {
-  background-color: var(--primary-hover);
-}
-
-.btn-secondary {
-  background-color: var(--input-bg);
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
-}
-
-.btn-secondary:hover {
-  background-color: var(--border-color);
-}
-
-.btn-outline {
-  background-color: transparent;
-  color: var(--primary-color);
-  border: 1px solid var(--primary-color);
-}
-
-.btn-outline:hover {
-  background-color: var(--primary-color);
-  color: white;
-}
-
-.btn-danger {
-  background-color: var(--danger-color);
-  color: white;
-}
-
-.btn-danger:hover {
-  background-color: var(--danger-hover);
-}
-
-.btn-sm {
-  padding: var(--space-2) var(--space-3);
-  font-size: var(--font-size-sm);
-}
-
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: var(--space-4);
-}
-
-.data-table th,
-.data-table td {
-  padding: var(--space-3);
-  text-align: left;
-  border-bottom: 1px solid var(--divider-color);
-  font-size: var(--font-size-sm);
-}
-
-.data-table th {
-  color: var(--text-secondary);
-  font-weight: 600;
-}
-
-.data-table .col-actions {
-  width: 120px;
 }
 
 .data-table tbody tr {
@@ -577,138 +451,13 @@ export default {
   position: relative;
 }
 
-.dropdown {
-  position: relative;
-  display: inline-block;
-}
-
 .dropdown-btn {
   min-width: 70px;
 }
 
 .dropdown-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
   min-width: 140px;
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 100;
-  display: none;
   margin-top: 4px;
-}
-
-.dropdown-open .dropdown-menu {
-  display: block;
-}
-
-.dropdown-item {
-  display: block;
-  width: 100%;
-  padding: 10px 14px;
-  text-align: left;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: var(--font-size-sm);
-  color: var(--text-primary);
-  transition: background-color var(--transition-fast);
-}
-
-.dropdown-item:hover {
-  background-color: var(--input-bg);
-}
-
-.dropdown-danger {
-  color: var(--danger-color);
-}
-
-.dropdown-danger:hover {
-  background-color: rgba(244, 67, 54, 0.1);
-}
-
-.dropdown-divider {
-  height: 1px;
-  background-color: var(--divider-color);
-  margin: 4px 0;
-}
-
-.center-text {
-  text-align: center;
-  padding: var(--space-10) 0;
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
-}
-
-.empty-state {
-  text-align: center;
-  padding: var(--space-10) 0;
-  color: var(--text-muted);
-  font-size: var(--font-size-base);
-}
-
-.spinner {
-  width: 24px;
-  height: 24px;
-  border: 3px solid rgba(76, 175, 80, 0.3);
-  border-top-color: var(--primary-color);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto var(--space-3);
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.alert-error {
-  background-color: rgba(244, 67, 54, 0.12);
-  color: #ef5350;
-  padding: var(--space-3);
-  border-radius: var(--radius-sm);
-  margin-top: var(--space-4);
-  border-left: 4px solid var(--danger-color);
-  font-size: var(--font-size-sm);
-}
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal {
-  background: var(--card-bg);
-  border-radius: var(--radius-lg);
-  padding: var(--space-6);
-  min-width: 400px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-}
-
-.modal-title {
-  margin: 0 0 var(--space-4) 0;
-  font-size: var(--font-size-lg);
-  color: var(--text-primary);
-}
-
-.modal-input {
-  width: 100%;
-  margin-bottom: var(--space-4);
-  box-sizing: border-box;
-}
-
-.modal-actions {
-  display: flex;
-  gap: var(--space-3);
-  justify-content: flex-end;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 </style>
