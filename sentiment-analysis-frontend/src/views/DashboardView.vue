@@ -547,11 +547,11 @@ export default {
 
     async loadProducts() {
       try {
-        const res = await fetch('http://localhost:8080/api/product/list');
+        const res = await fetch('/api/product/list');
         if (!res.ok) throw new Error('加载失败');
         this.products = await res.json();
       } catch (err) {
-        this.error = '加载商品列表失败';
+        this.error = '加载商品列表失败：' + err.message;
       }
     },
 
@@ -563,7 +563,7 @@ export default {
       this.disposeCharts();
 
       try {
-        let url = `http://localhost:8080/api/review/overview/${this.selectedProductId}`;
+        let url = `/api/review/overview/${this.selectedProductId}`;
         const params = [];
         if (this.startDate) {
           params.push(`startTime=${this.startDate}T00:00:00`);
@@ -577,9 +577,9 @@ export default {
 
         const [overviewRes, weeklyRes, wordcloudRes, keywordRes] = await Promise.all([
           fetch(url),
-          fetch(`http://localhost:8080/api/review/weekly/${this.selectedProductId}?weeks=8`),
-          fetch(`http://localhost:8080/api/review/wordcloud/${this.selectedProductId}?topN=30`),
-          fetch(`http://localhost:8080/api/review/keyword-attribution/${this.selectedProductId}?topN=15`)
+          fetch(`/api/review/weekly/${this.selectedProductId}?weeks=8`),
+          fetch(`/api/review/wordcloud/${this.selectedProductId}?topN=30`),
+          fetch(`/api/review/keyword-attribution/${this.selectedProductId}?topN=15`)
         ]);
 
         if (!overviewRes.ok) throw new Error('加载概览失败');

@@ -1,0 +1,9 @@
+2026/04/01 22:46:30 [emerg] 37216#37520: invalid number of arguments in "root" directive in E:\graduation project\nginx-1.28.3/conf/nginx.conf:32
+2026/04/01 22:51:46 [emerg] 3168#37500: invalid number of arguments in "root" directive in E:\graduation project\nginx-1.28.3/conf/nginx.conf:32
+2026/04/01 22:56:34 [emerg] 35376#36744: invalid number of arguments in "root" directive in E:\graduation project\nginx-1.28.3/conf/nginx.conf:32
+2026/04/01 22:56:55 [emerg] 32200#35592: invalid number of arguments in "root" directive in E:\graduation project\nginx-1.28.3/conf/nginx.conf:32
+2026/04/01 22:56:57 [emerg] 13792#14876: invalid number of arguments in "root" directive in E:\graduation project\nginx-1.28.3/conf/nginx.conf:32
+2026/04/01 22:58:01 [emerg] 27136#35548: invalid number of arguments in "root" directive in E:\graduation project\nginx-1.28.3/conf/nginx.conf:32
+2026/04/01 22:59:18 [emerg] 37884#25608: invalid number of arguments in "root" directive in E:\graduation project\nginx-1.28.3/conf/nginx.conf:32
+2026/04/01 22:59:26 [emerg] 36000#31412: invalid number of arguments in "root" directive in E:\graduation project\nginx-1.28.3/conf/nginx.conf:32
+2026/04/01 23:00:00 [emerg] 37340#11492: invalid number of arguments in "root" directive in E:\graduation project\nginx-1.28.3/conf/nginx.conf:32

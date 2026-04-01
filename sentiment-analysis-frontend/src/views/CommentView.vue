@@ -147,6 +147,10 @@
       </div>
     </div>
 
+    <div v-if="error" class="alert alert-error">
+      {{ error }}
+    </div>
+
     <div v-if="message" :class="['alert', messageType === 'error' ? 'alert-error' : 'alert-success']">
       {{ message }}
     </div>
@@ -248,6 +252,7 @@ export default {
       products: [],
       reviews: [],
       loading: false,
+      error: null,
       message: '',
       messageType: 'success',
       filters: {
@@ -312,10 +317,10 @@ export default {
 
     async loadProducts() {
       try {
-        const res = await fetch('http://localhost:8080/api/product/list');
+        const res = await fetch('/api/product/list');
         this.products = await res.json();
       } catch (err) {
-        this.showMessage('加载商品失败', 'error');
+        this.error = '加载商品失败：' + err.message;
       }
     },
 
@@ -336,7 +341,7 @@ export default {
     async loadReviews() {
       this.loading = true;
       try {
-        let url = `http://localhost:8080/api/review/list-all?`;
+        let url = `/api/review/list-all?`;
         url += `page=${this.pagination.currentPage}`;
         url += `&size=${this.pagination.size}`;
         url += `&sortBy=${this.filters.sortBy}`;
@@ -364,7 +369,7 @@ export default {
         this.pagination.currentPage = data.currentPage || 0;
         this.loadUnanalyzedCount();
       } catch (err) {
-        this.showMessage('加载评论失败', 'error');
+        this.error = '加载评论失败：' + err.message;
       } finally {
         this.loading = false;
       }
@@ -377,7 +382,7 @@ export default {
 
     async loadUnanalyzedCount() {
       try {
-        let url = 'http://localhost:8080/api/review/unanalyzed-count';
+        let url = '/api/review/unanalyzed-count';
         if (this.filters.productId) {
           url += `/${this.filters.productId}`;
         }
@@ -394,9 +399,9 @@ export default {
       
       this.analyzing = true;
       try {
-        let url = 'http://localhost:8080/api/review/analyze-all';
+        let url = '/api/review/analyze-all';
         if (this.filters.productId) {
-          url = `http://localhost:8080/api/review/analyze/${this.filters.productId}`;
+          url = `/api/review/analyze/${this.filters.productId}`;
         }
         const res = await fetch(url, { method: 'POST' });
         const result = await res.text();
@@ -404,7 +409,7 @@ export default {
         await this.loadReviews();
         await this.loadUnanalyzedCount();
       } catch (err) {
-        this.showMessage('分析失败：' + err.message, 'error');
+        this.error = '分析失败：' + err.message;
       } finally {
         this.analyzing = false;
       }
@@ -434,12 +439,12 @@ export default {
         .filter(line => line);
         
       if (!lines.length) {
-        this.showMessage('请输入评论', 'error');
+        this.error = '请输入评论';
         return;
       }
 
       try {
-        const res = await fetch('http://localhost:8080/api/review/upload', {
+        const res = await fetch('/api/review/upload', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -456,7 +461,7 @@ export default {
           throw new Error('上传失败');
         }
       } catch (err) {
-        this.showMessage('上传失败', 'error');
+        this.error = '上传失败：' + err.message;
       }
     },
 
@@ -466,7 +471,7 @@ export default {
       formData.append('productId', this.uploadForm.productId);
 
       try {
-        const res = await fetch('http://localhost:8080/api/review/upload/csv', {
+        const res = await fetch('/api/review/upload/csv', {
           method: 'POST',
           body: formData
         });
@@ -481,7 +486,7 @@ export default {
           throw new Error(data.message || '上传失败');
         }
       } catch (err) {
-        this.showMessage('上传CSV失败', 'error');
+        this.error = '上传CSV失败：' + err.message;
       }
     },
 
@@ -505,11 +510,11 @@ export default {
           contents = contents.filter(c => c && typeof c === 'string' && c.trim());
 
           if (contents.length === 0) {
-            this.showMessage('JSON文件中没有找到有效的评论', 'error');
+            this.error = 'JSON文件中没有找到有效的评论';
             return;
           }
 
-          const res = await fetch('http://localhost:8080/api/review/upload', {
+          const res = await fetch('/api/review/upload', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -526,7 +531,7 @@ export default {
             throw new Error('上传失败');
           }
         } catch (err) {
-          this.showMessage('解析JSON失败', 'error');
+          this.error = '解析JSON失败：' + err.message;
         }
       };
       reader.readAsText(this.uploadForm.jsonFile);
@@ -545,7 +550,7 @@ export default {
 
     async saveSentimentEdit() {
       try {
-        const res = await fetch(`http://localhost:8080/api/review/update-sentiment/${this.editingReview.id}`, {
+        const res = await fetch(`/api/review/update-sentiment/${this.editingReview.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ sentimentLabel: this.editingSentiment })
@@ -559,7 +564,7 @@ export default {
           throw new Error('修正失败');
         }
       } catch (err) {
-        this.showMessage('修正失败', 'error');
+        this.error = '修正失败：' + err.message;
       }
     },
 
@@ -568,7 +573,7 @@ export default {
 
       (async () => {
         try {
-          const res = await fetch(`http://localhost:8080/api/review/delete/${id}`, {
+          const res = await fetch(`/api/review/delete/${id}`, {
             method: 'DELETE'
           });
 
@@ -579,7 +584,7 @@ export default {
             throw new Error('删除失败');
           }
         } catch (err) {
-          this.showMessage('删除失败', 'error');
+          this.error = '删除失败：' + err.message;
         }
       })();
     },
@@ -649,24 +654,22 @@ export default {
   color: #9e9e9e;
 }
 
-.alert {
+.alert-error {
+  background: rgba(244, 67, 54, 0.1);
+  color: #ef5350;
   padding: var(--space-3);
   border-radius: var(--radius-sm);
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  min-width: 200px;
-  z-index: 1001;
-}
-
-.alert-error {
-  background: rgba(244, 67, 54, 0.9);
-  color: white;
+  margin-top: var(--space-4);
+  border-left: 4px solid var(--danger-color);
 }
 
 .alert-success {
-  background: rgba(76, 175, 80, 0.9);
-  color: white;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  margin-top: var(--space-4);
+  background: rgba(76, 175, 80, 0.15);
+  color: var(--primary-color);
+  border-left: 4px solid var(--primary-color);
 }
 
 .modal-large {

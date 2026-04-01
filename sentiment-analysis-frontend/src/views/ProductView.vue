@@ -234,7 +234,7 @@ export default {
       this.loading = true;
       this.error = null;
       try {
-        const res = await fetch('http://localhost:8080/api/product/list-with-stats');
+        const res = await fetch('/api/product/list-with-stats');
         if (!res.ok) throw new Error('服务器返回错误');
         const data = await res.json();
         this.products = data.products || [];
@@ -255,7 +255,7 @@ export default {
 
       this.error = null;
       try {
-        const res = await fetch('http://localhost:8080/api/product/add', {
+        const res = await fetch('/api/product/add', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ category })
@@ -313,7 +313,7 @@ export default {
       }
 
       try {
-        const res = await fetch(`http://localhost:8080/api/product/update/${this.editingProductId}`, {
+        const res = await fetch(`/api/product/update/${this.editingProductId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ category })
@@ -351,7 +351,7 @@ export default {
       this.error = null;
       (async () => {
         try {
-          const res = await fetch(`http://localhost:8080/api/product/delete/${id}`, {
+          const res = await fetch(`/api/product/delete/${id}`, {
             method: 'DELETE'
           });
 

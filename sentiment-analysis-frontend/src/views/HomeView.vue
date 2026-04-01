@@ -88,7 +88,7 @@ export default {
         return;
       }
       try {
-        const response = await fetch('http://localhost:8080/api/test/predict', {
+        const response = await fetch('/api/test/predict', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text })
@@ -100,7 +100,7 @@ export default {
           this.error = '分析失败：' + (data.msg || '未知错误');
         }
       } catch (err) {
-        this.error = '请求失败，请确保后端正在运行！';
+        this.error = '请求失败：' + err.message;
         console.error('Error:', err);
       }
     },
