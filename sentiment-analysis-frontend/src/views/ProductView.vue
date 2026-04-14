@@ -6,8 +6,13 @@
       <h3 class="card-title">筛选条件</h3>
       <div class="filter-row">
         <div class="filter-item">
-          <label>商品名称</label>
-          <input v-model="filters.keyword" type="text" placeholder="搜索商品名称..." @input="applyFilters" class="input-field" />
+          <label>选择商品</label>
+          <select v-model="filters.productId" @change="applyFilters" class="select-field">
+            <option value="">全部商品</option>
+            <option v-for="p in products" :key="p.id" :value="p.id">
+              {{ p.category }}
+            </option>
+          </select>
         </div>
         <div class="filter-item">
           <label>开始时间</label>
@@ -33,7 +38,7 @@
           </select>
         </div>
         <div class="filter-item filter-actions">
-          <button @click="resetFilters" class="btn btn-secondary">重置</button>
+          <button @click="resetFilters" class="btn btn-secondary"><IconRefresh /> 重置</button>
         </div>
       </div>
     </div>
@@ -42,7 +47,7 @@
       <div class="card-header">
         <h3 class="card-title">商品列表（{{ filteredProducts.length }} 项）</h3>
         <div class="card-actions">
-          <button @click="showAddModal = true" class="btn btn-outline btn-sm">添加商品</button>
+          <button @click="showAddModal = true" class="btn btn-outline btn-sm"><IconPlus /> 添加商品</button>
         </div>
       </div>
 
@@ -63,7 +68,7 @@
             <th>创建时间</th>
             <th>评论数</th>
             <th>好评率</th>
-            <th class="col-actions">操作</th>
+            <th class="col-actions">编辑</th>
           </tr>
         </thead>
         <tbody>
@@ -80,22 +85,22 @@
             </td>
             <td class="actions-cell">
               <div class="dropdown" :class="{ 'dropdown-open': openDropdownId === product.id }">
-                <button @click="toggleDropdown(product.id)" class="btn btn-outline btn-sm dropdown-btn">
-                  操作 ▼
+                <button @click="toggleDropdown(product.id)" class="btn btn-outline btn-sm dropdown-btn icon-only" title=":D">
+                  <IconEdit />
                 </button>
                 <div class="dropdown-menu">
                   <button @click="openEditModal(product); closeDropdown()" class="dropdown-item">
-                    ✏️ 编辑
+                    <IconEdit /> 编辑
                   </button>
                   <button @click="goToComments(product.id); closeDropdown()" class="dropdown-item">
-                    💬 评论管理
+                    <IconMessage /> 评论管理
                   </button>
                   <button @click="goToDashboard(product.id); closeDropdown()" class="dropdown-item">
-                    📊 数据看板
+                    <IconChart /> 数据看板
                   </button>
                   <div class="dropdown-divider"></div>
-                  <button @click="deleteProduct(product.id, product.category); closeDropdown()" class="dropdown-item dropdown-danger">
-                    🗑️ 删除
+                  <button @click="deleteProduct(product.id, product.category); closeDropdown()" class="dropdown-item danger">
+                    <IconTrash /> 删除
                   </button>
                 </div>
               </div>
@@ -111,14 +116,19 @@
 
     <div v-if="showAddModal" class="modal-overlay" @click.self="closeAddModal">
       <div class="modal">
-        <h3 class="modal-title">添加商品</h3>
-        <input
-          v-model="newCategory"
-          type="text"
-          class="input-field modal-input"
-          placeholder="请输入商品类别"
-          @keypress.enter="addProduct"
-        />
+        <div class="modal-header">
+          <h3 class="modal-title">添加商品</h3>
+          <button @click="closeAddModal" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <input
+            v-model="newCategory"
+            type="text"
+            class="input-field"
+            placeholder="请输入商品类别"
+            @keypress.enter="addProduct"
+          />
+        </div>
         <div class="modal-actions">
           <button @click="closeAddModal" class="btn btn-secondary">取消</button>
           <button @click="addProduct" class="btn btn-primary">添加</button>
@@ -128,14 +138,19 @@
 
     <div v-if="showEditModal" class="modal-overlay" @click.self="closeEditModal">
       <div class="modal">
-        <h3 class="modal-title">编辑商品名称</h3>
-        <input
-          v-model="editCategory"
-          type="text"
-          class="input-field modal-input"
-          placeholder="请输入新的商品名称"
-          @keypress.enter="saveEdit"
-        />
+        <div class="modal-header">
+          <h3 class="modal-title">编辑商品名称</h3>
+          <button @click="closeEditModal" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <input
+            v-model="editCategory"
+            type="text"
+            class="input-field"
+            placeholder="请输入新的商品名称"
+            @keypress.enter="saveEdit"
+          />
+        </div>
         <div class="modal-actions">
           <button @click="closeEditModal" class="btn btn-secondary">取消</button>
           <button @click="saveEdit" class="btn btn-primary">保存</button>
@@ -146,8 +161,30 @@
 </template>
 
 <script>
+import { fetchProducts, addProduct, updateProduct, deleteProduct } from '../utils/api.js';
+import IconRefresh from '../components/icons/IconRefresh.vue';
+import IconPlus from '../components/icons/IconPlus.vue';
+import IconEdit from '../components/icons/IconEdit.vue';
+import IconTrash from '../components/icons/IconTrash.vue';
+import IconMessage from '../components/icons/IconMessage.vue';
+import IconChart from '../components/icons/IconChart.vue';
+
 export default {
   name: 'ProductView',
+  components: {
+    IconRefresh,
+    IconPlus,
+    IconEdit,
+    IconTrash,
+    IconMessage,
+    IconChart
+  },
+  props: {
+    manageUserId: {
+      type: Number,
+      default: null
+    }
+  },
   data() {
     return {
       products: [],
@@ -160,7 +197,7 @@ export default {
       editCategory: '',
       openDropdownId: null,
       filters: {
-        keyword: '',
+        productId: '',
         startDate: '',
         endDate: '',
         sortBy: 'createTime',
@@ -172,11 +209,8 @@ export default {
     filteredProducts() {
       let result = [...this.products];
 
-      if (this.filters.keyword) {
-        const keyword = this.filters.keyword.toLowerCase();
-        result = result.filter(p => 
-          p.category.toLowerCase().includes(keyword)
-        );
+      if (this.filters.productId) {
+        result = result.filter(p => p.id === this.filters.productId);
       }
 
       if (this.filters.startDate) {
@@ -214,6 +248,13 @@ export default {
       return result;
     }
   },
+  watch: {
+    manageUserId: {
+      handler() {
+        this.loadProducts();
+      }
+    }
+  },
   async mounted() {
     await this.loadProducts();
   },
@@ -234,9 +275,7 @@ export default {
       this.loading = true;
       this.error = null;
       try {
-        const res = await fetch('/api/product/list-with-stats');
-        if (!res.ok) throw new Error('服务器返回错误');
-        const data = await res.json();
+        const data = await fetchProducts(this.manageUserId);
         this.products = data.products || [];
       } catch (err) {
         this.error = '加载商品列表失败：' + err.message;
@@ -255,17 +294,7 @@ export default {
 
       this.error = null;
       try {
-        const res = await fetch('/api/product/add', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ category })
-        });
-
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.message || '添加失败');
-        }
-
+        await addProduct(category, this.manageUserId);
         this.newCategory = '';
         await this.loadProducts();
         this.closeAddModal();
@@ -285,7 +314,7 @@ export default {
 
     resetFilters() {
       this.filters = {
-        keyword: '',
+        productId: '',
         startDate: '',
         endDate: '',
         sortBy: 'createTime',
@@ -313,14 +342,7 @@ export default {
       }
 
       try {
-        const res = await fetch(`/api/product/update/${this.editingProductId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ category })
-        });
-
-        if (!res.ok) throw new Error('更新失败');
-
+        await updateProduct(this.editingProductId, category, this.manageUserId);
         this.closeEditModal();
         await this.loadProducts();
       } catch (err) {
@@ -345,30 +367,47 @@ export default {
       this.openDropdownId = null;
     },
 
-    deleteProduct(id, name) {
-      if (!confirm(`⚠️ 确定删除商品「${name}」吗？该商品下的所有评论将一并删除！`)) return;
+    async deleteProduct(id, name) {
+      if (!confirm(`确定删除商品「${name}」吗？该商品下的所有评论将一并删除！`)) return;
 
       this.error = null;
-      (async () => {
-        try {
-          const res = await fetch(`/api/product/delete/${id}`, {
-            method: 'DELETE'
-          });
-
-          if (!res.ok) throw new Error('删除失败');
-
-          await this.loadProducts();
-        } catch (err) {
-          this.error = '删除商品失败：' + err.message;
-          console.error(err);
-        }
-      })();
+      try {
+        await deleteProduct(id, this.manageUserId);
+        await this.loadProducts();
+      } catch (err) {
+        this.error = '删除商品失败：' + err.message;
+        console.error(err);
+      }
     }
   }
 };
 </script>
 
 <style scoped>
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.close-btn:hover {
+  color: var(--text-primary);
+}
+
+.modal-body {
+  margin-bottom: var(--space-4);
+}
+
 .product-management {
   padding: var(--space-6);
   max-width: 1400px;
@@ -396,68 +435,15 @@ export default {
   min-width: 120px;
 }
 
-.input-field::placeholder {
-  color: var(--text-muted);
-}
-
-.input-field:focus,
-.select-field:focus {
-  outline: none;
-  border-color: var(--primary-color);
-}
-
-.add-form {
+.dropdown-btn.icon-only {
+  padding: 6px 8px;
   display: flex;
-  gap: var(--space-3);
+  align-items: center;
+  justify-content: center;
 }
 
-.data-table tbody tr {
-  transition: background-color var(--transition-fast);
-}
-
-.data-table tbody tr:hover {
-  background-color: var(--input-bg);
-}
-
-.rate-tag {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.rate-tag-high {
-  background: rgba(76, 175, 80, 0.15);
-  color: var(--primary-color);
-}
-
-.rate-tag-medium {
-  background: rgba(255, 152, 0, 0.15);
-  color: #ff9800;
-}
-
-.rate-tag-low {
-  background: rgba(244, 67, 54, 0.15);
-  color: var(--danger-color);
-}
-
-.rate-tag-pending {
-  background: rgba(158, 158, 158, 0.15);
-  color: #9e9e9e;
-}
-
-.actions-cell {
-  position: relative;
-}
-
-.dropdown-btn {
-  min-width: 70px;
-}
-
-.dropdown-menu {
-  min-width: 140px;
-  margin-top: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.dropdown-btn.icon-only svg {
+  width: 16px;
+  height: 16px;
 }
 </style>

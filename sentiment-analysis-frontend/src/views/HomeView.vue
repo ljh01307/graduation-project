@@ -19,7 +19,7 @@
           @keypress.enter="analyze"
           class="input-field"
         />
-        <button @click="analyze" class="btn btn-primary">分析情感</button>
+        <button @click="analyze" class="btn btn-primary"><IconChart /> 分析情感</button>
       </div>
 
       <div class="examples">
@@ -42,8 +42,6 @@
             :class="{ positive: result.sentiment === '正面', negative: result.sentiment === '负面' }"
           >
             {{ result.sentiment }}
-            <span v-if="result.sentiment === '正面'">✅</span>
-            <span v-if="result.sentiment === '负面'">❌</span>
           </span>
         </div>
         <div class="result-item">
@@ -64,8 +62,14 @@
 </template>
 
 <script>
+import { fetchWithAuth } from '../router/index.js';
+import IconChart from '../components/icons/IconChart.vue';
+
 export default {
   name: 'HomeView',
+  components: {
+    IconChart
+  },
   data() {
     return {
       comment: '',
@@ -88,12 +92,24 @@ export default {
         return;
       }
       try {
-        const response = await fetch('/api/test/predict', {
+        const response = await fetchWithAuth('/api/test/predict', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text })
         });
-        const data = await response.json();
+        const contentType = response.headers.get('content-type');
+        let data;
+        if (contentType && contentType.includes('application/json')) {
+          data = await response.json();
+        } else {
+          const responseText = await response.text();
+          if (!response.ok) {
+            this.error = '请求失败：' + responseText;
+            return;
+          }
+          this.result = { sentiment: responseText };
+          return;
+        }
         if (data.code === 200 && data.data) {
           this.result = data.data;
         } else {

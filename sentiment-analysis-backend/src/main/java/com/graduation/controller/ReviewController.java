@@ -1,5 +1,6 @@
 package com.graduation.controller;
 
+import com.graduation.common.GlobalResponse;
 import com.graduation.entity.Review;
 import com.graduation.service.ReviewService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,11 +9,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api/review")
 public class ReviewController {
@@ -21,148 +20,174 @@ public class ReviewController {
     private ReviewService reviewService;
 
     @PostMapping("/upload")
-    public List<Review> uploadReviews(@RequestBody Map<String, Object> payload) {
+    public GlobalResponse<?> uploadReviews(@RequestBody Map<String, Object> payload,
+                                         @RequestAttribute Long userId,
+                                         @RequestAttribute String role,
+                                         @RequestParam(required = false) Long manageUserId) {
+        Long targetUserId = reviewService.resolveTargetUserId(userId, role, manageUserId);
         Long productId = Long.valueOf(payload.get("productId").toString());
         @SuppressWarnings("unchecked")
         List<String> contents = (List<String>) payload.get("contents");
-        return reviewService.uploadReviews(productId, contents);
+        List<Review> reviews = reviewService.uploadReviews(productId, contents, targetUserId);
+        return GlobalResponse.success("评论上传成功", reviews);
     }
 
     @PostMapping("/analyze/{productId}")
-    public String analyzeReviews(@PathVariable Long productId) {
-        reviewService.analyzeReviews(productId);
-        return "分析任务已启动，请稍后查看结果";
+    public GlobalResponse<?> analyzeReviews(@PathVariable Long productId,
+                                          @RequestAttribute Long userId,
+                                          @RequestAttribute String role,
+                                          @RequestParam(required = false) Long manageUserId) {
+        Long targetUserId = reviewService.resolveTargetUserId(userId, role, manageUserId);
+        reviewService.analyzeReviews(productId, targetUserId);
+        return GlobalResponse.success("分析任务已启动，请稍后查看结果", null);
     }
 
     @GetMapping("/stats/{productId}")
-    public Map<String, Long> getStats(@PathVariable Long productId) {
-        return reviewService.getSentimentCount(productId);
+    public GlobalResponse<?> getStats(@PathVariable Long productId,
+                                      @RequestAttribute Long userId,
+                                      @RequestAttribute String role,
+                                      @RequestParam(required = false) Long manageUserId) {
+        Long targetUserId = reviewService.resolveTargetUserId(userId, role, manageUserId);
+        Map<String, Long> stats = reviewService.getSentimentCount(productId, targetUserId);
+        return GlobalResponse.success(stats);
     }
 
     @GetMapping("/weekly/{productId}")
-    public Map<String, Object> getWeeklyStats(
-            @PathVariable Long productId,
-            @RequestParam(defaultValue = "4") int weeks) {
-        return reviewService.getWeeklyStats(productId, weeks);
+    public GlobalResponse<?> getWeeklyStats(@PathVariable Long productId,
+                                            @RequestParam(defaultValue = "4") int weeks,
+                                            @RequestAttribute Long userId,
+                                            @RequestAttribute String role,
+                                            @RequestParam(required = false) Long manageUserId) {
+        Long targetUserId = reviewService.resolveTargetUserId(userId, role, manageUserId);
+        Map<String, Object> data = reviewService.getWeeklyStats(productId, weeks, targetUserId);
+        return GlobalResponse.success(data);
     }
 
     @GetMapping("/wordcloud/{productId}")
-    public Map<String, Object> getWordCloudData(
-            @PathVariable Long productId,
-            @RequestParam(defaultValue = "50") int topN) {
-        return reviewService.getWordCloudData(productId, topN);
+    public GlobalResponse<?> getWordCloudData(@PathVariable Long productId,
+                                              @RequestParam(defaultValue = "50") int topN,
+                                              @RequestAttribute Long userId,
+                                              @RequestAttribute String role,
+                                              @RequestParam(required = false) Long manageUserId) {
+        Long targetUserId = reviewService.resolveTargetUserId(userId, role, manageUserId);
+        Map<String, Object> data = reviewService.getWordCloudData(productId, topN, targetUserId);
+        return GlobalResponse.success(data);
     }
 
     @GetMapping("/overview/{productId}")
-    public Map<String, Object> getProductOverview(
-            @PathVariable Long productId,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
+    public GlobalResponse<?> getProductOverview(@PathVariable Long productId,
+                                                @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
+                                                @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime,
+                                                @RequestAttribute Long userId,
+                                                @RequestAttribute String role,
+                                                @RequestParam(required = false) Long manageUserId) {
+        Long targetUserId = reviewService.resolveTargetUserId(userId, role, manageUserId);
+        Map<String, Object> data;
         if (startTime != null && endTime != null) {
-            return reviewService.getProductOverview(productId, startTime, endTime);
+            data = reviewService.getProductOverview(productId, startTime, endTime, targetUserId);
+        } else {
+            data = reviewService.getProductOverview(productId, targetUserId);
         }
-        return reviewService.getProductOverview(productId);
+        return GlobalResponse.success(data);
     }
 
     @GetMapping("/list/{productId}")
-    public Map<String, Object> getReviewsByPage(
-            @PathVariable Long productId,
-            @RequestParam(required = false) Integer sentimentLabel,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "uploadTime") String sortBy,
-            @RequestParam(defaultValue = "DESC") String sortDir) {
-        return reviewService.getReviewsByPage(
-            productId, sentimentLabel, startTime, endTime, page, size, sortBy, sortDir);
+    public GlobalResponse<?> getReviewsByPage(@PathVariable Long productId,
+                                               @RequestParam(required = false) Integer sentimentLabel,
+                                               @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
+                                               @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime,
+                                               @RequestParam(defaultValue = "0") int page,
+                                               @RequestParam(defaultValue = "20") int size,
+                                               @RequestParam(defaultValue = "uploadTime") String sortBy,
+                                               @RequestParam(defaultValue = "DESC") String sortDir,
+                                               @RequestAttribute Long userId,
+                                               @RequestAttribute String role,
+                                               @RequestParam(required = false) Long manageUserId) {
+        Long targetUserId = reviewService.resolveTargetUserId(userId, role, manageUserId);
+        Map<String, Object> data = reviewService.getReviewsByPage(
+            productId, sentimentLabel, startTime, endTime, page, size, sortBy, sortDir, targetUserId);
+        return GlobalResponse.success(data);
     }
 
     @GetMapping("/list-all")
-    public Map<String, Object> getAllReviewsByPage(
-            @RequestParam(required = false) Long productId,
-            @RequestParam(required = false) Integer sentimentLabel,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "uploadTime") String sortBy,
-            @RequestParam(defaultValue = "DESC") String sortDir) {
-        return reviewService.getAllReviewsByPage(
-            productId, sentimentLabel, startTime, endTime, page, size, sortBy, sortDir);
+    public GlobalResponse<?> getAllReviewsByPage(@RequestParam(required = false) Long productId,
+                                                  @RequestParam(required = false) Integer sentimentLabel,
+                                                  @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
+                                                  @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime,
+                                                  @RequestParam(defaultValue = "0") int page,
+                                                  @RequestParam(defaultValue = "20") int size,
+                                                  @RequestParam(defaultValue = "uploadTime") String sortBy,
+                                                  @RequestParam(defaultValue = "DESC") String sortDir,
+                                                  @RequestAttribute Long userId,
+                                                  @RequestAttribute String role,
+                                                  @RequestParam(required = false) Long manageUserId) {
+        Long targetUserId = reviewService.resolveTargetUserId(userId, role, manageUserId);
+        Map<String, Object> data = reviewService.getAllReviewsByPage(
+            productId, sentimentLabel, startTime, endTime, page, size, sortBy, sortDir, targetUserId);
+        return GlobalResponse.success(data);
     }
 
     @PutMapping("/update-sentiment/{reviewId}")
-    public Map<String, Object> updateSentimentLabel(
-            @PathVariable Long reviewId,
-            @RequestBody Map<String, Object> payload) {
+    public GlobalResponse<?> updateSentimentLabel(@PathVariable Long reviewId,
+                                                   @RequestBody Map<String, Object> payload,
+                                                   @RequestAttribute Long userId,
+                                                   @RequestAttribute String role,
+                                                   @RequestParam(required = false) Long manageUserId) {
+        Long targetUserId = reviewService.resolveTargetUserId(userId, role, manageUserId);
         Integer sentimentLabel = (Integer) payload.get("sentimentLabel");
         if (sentimentLabel == null || (sentimentLabel != 0 && sentimentLabel != 1)) {
             throw new IllegalArgumentException("情感标签必须为0或1");
         }
-        Review review = reviewService.updateSentimentLabel(reviewId, sentimentLabel);
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", true);
-        result.put("review", review);
-        return result;
+        Review review = reviewService.updateSentimentLabel(reviewId, sentimentLabel, targetUserId);
+        return GlobalResponse.success("情感标签更新成功", review);
     }
 
     @DeleteMapping("/delete/{reviewId}")
-    public Map<String, Object> deleteReview(@PathVariable Long reviewId) {
-        reviewService.deleteReview(reviewId);
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", true);
-        result.put("message", "删除成功");
-        return result;
+    public GlobalResponse<?> deleteReview(@PathVariable Long reviewId,
+                                            @RequestAttribute Long userId,
+                                            @RequestAttribute String role,
+                                            @RequestParam(required = false) Long manageUserId) {
+        Long targetUserId = reviewService.resolveTargetUserId(userId, role, manageUserId);
+        reviewService.deleteReview(reviewId, targetUserId);
+        return GlobalResponse.success("评论删除成功", null);
     }
 
     @GetMapping("/keyword-attribution/{productId}")
-    public Map<String, Object> getKeywordAttribution(
-            @PathVariable Long productId,
-            @RequestParam(defaultValue = "20") int topN) {
-        return reviewService.getKeywordAttribution(productId, topN);
+    public GlobalResponse<?> getKeywordAttribution(@PathVariable Long productId,
+                                                    @RequestParam(defaultValue = "20") int topN,
+                                                    @RequestAttribute Long userId,
+                                                    @RequestAttribute String role,
+                                                    @RequestParam(required = false) Long manageUserId) {
+        Long targetUserId = reviewService.resolveTargetUserId(userId, role, manageUserId);
+        Map<String, Object> data = reviewService.getKeywordAttribution(productId, topN, targetUserId);
+        return GlobalResponse.success(data);
     }
 
     @GetMapping("/unanalyzed-count/{productId}")
-    public Map<String, Object> getUnanalyzedCount(@PathVariable Long productId) {
-        long count = reviewService.countUnanalyzed(productId);
-        Map<String, Object> result = new HashMap<>();
-        result.put("count", count);
-        return result;
+    public GlobalResponse<?> getUnanalyzedCount(@PathVariable Long productId,
+                                                 @RequestAttribute Long userId,
+                                                 @RequestAttribute String role,
+                                                 @RequestParam(required = false) Long manageUserId) {
+        Long targetUserId = reviewService.resolveTargetUserId(userId, role, manageUserId);
+        long count = reviewService.countUnanalyzed(productId, targetUserId);
+        return GlobalResponse.success(count);
     }
 
     @GetMapping("/unanalyzed-count")
-    public Map<String, Object> getUnanalyzedCountAll() {
-        long count = reviewService.countUnanalyzedAll();
-        Map<String, Object> result = new HashMap<>();
-        result.put("count", count);
-        return result;
+    public GlobalResponse<?> getUnanalyzedCountAll(@RequestAttribute Long userId,
+                                                    @RequestAttribute String role,
+                                                    @RequestParam(required = false) Long manageUserId) {
+        Long targetUserId = reviewService.resolveTargetUserId(userId, role, manageUserId);
+        long count = reviewService.countUnanalyzedAll(targetUserId);
+        return GlobalResponse.success(count);
     }
 
     @PostMapping("/analyze-all")
-    public String analyzeAllReviews() {
-        reviewService.analyzeAllReviews();
-        return "分析任务已启动，请稍后查看结果";
-    }
-
-    @PostMapping("/upload/csv")
-    public Map<String, Object> uploadReviewsByCSV(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam("productId") Long productId) {
-        
-        Map<String, Object> result = new HashMap<>();
-        
-        try {
-            int count = reviewService.uploadReviewsFromCSV(file, productId);
-            
-            result.put("code", 200);
-            result.put("message", "上传成功");
-            result.put("count", count);
-        } catch (Exception e) {
-            result.put("code", 500);
-            result.put("message", "上传失败: " + e.getMessage());
-        }
-        
-        return result;
+    public GlobalResponse<?> analyzeAllReviews(@RequestAttribute Long userId,
+                                               @RequestAttribute String role,
+                                               @RequestParam(required = false) Long manageUserId) {
+        Long targetUserId = reviewService.resolveTargetUserId(userId, role, manageUserId);
+        reviewService.analyzeAllReviews(targetUserId);
+        return GlobalResponse.success("分析任务已启动，请稍后查看结果", null);
     }
 }

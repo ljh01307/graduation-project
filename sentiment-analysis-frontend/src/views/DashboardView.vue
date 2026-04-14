@@ -23,8 +23,7 @@
           <input v-model="endDate" type="date" class="input-field" />
         </div>
         <div class="filter-item filter-actions">
-          <button @click="loadProductData" class="btn btn-primary">查询</button>
-          <button @click="resetFilters" class="btn btn-secondary">重置</button>
+          <button @click="resetFilters" class="btn btn-secondary"><IconRefresh /> 重置</button>
         </div>
       </div>
     </div>
@@ -186,11 +185,63 @@
 
 <script>
 import * as echarts from 'echarts';
+import { getToken } from '../utils/auth.js';
+import IconRefresh from '../components/icons/IconRefresh.vue';
+
+const API_BASE = '/api';
+
+async function apiRequest(url, options = {}) {
+  const token = getToken();
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token && { 'Authorization': `Bearer ${token}` }),
+    ...options.headers
+  };
+
+  const response = await fetch(`${API_BASE}${url}`, {
+    ...options,
+    headers
+  });
+
+  const contentType = response.headers.get('content-type');
+  let data;
+  if (contentType && contentType.includes('application/json')) {
+    data = await response.json();
+  } else {
+    const text = await response.text();
+    if (!response.ok) {
+      throw new Error(text || '请求失败');
+    }
+    return text;
+  }
+
+  if (!response.ok) {
+    throw new Error(data.message || '请求失败');
+  }
+
+  if (data && typeof data === 'object' && 'code' in data && 'data' in data) {
+    if (data.code !== 200) {
+      throw new Error(data.message || '请求失败');
+    }
+    return data.data;
+  }
+
+  return data;
+}
 
 const allColors = ['#4CAF50', '#f44336', '#2196F3', '#FF9800', '#9C27B0', '#00BCD4', '#FF5722', '#607D8B'];
 
 export default {
   name: 'DashboardView',
+  components: {
+    IconRefresh
+  },
+  props: {
+    manageUserId: {
+      type: Number,
+      default: null
+    }
+  },
   data() {
     return {
       products: [],
@@ -228,6 +279,22 @@ export default {
       return Number(this.overview.positiveRate || 0).toFixed(1);
     }
   },
+  watch: {
+    manageUserId: {
+      handler() {
+        this.loadProducts();
+        if (this.selectedProductId) {
+          this.loadProductData();
+        }
+      }
+    },
+    '$route.query.productId'(newVal) {
+      if (newVal) {
+        this.selectedProductId = parseInt(newVal);
+        this.loadProductData();
+      }
+    }
+  },
   mounted() {
     this.resizeHandler = () => {
       this.handleResize();
@@ -243,14 +310,6 @@ export default {
   beforeUnmount() {
     window.removeEventListener('resize', this.resizeHandler);
     this.disposeCharts();
-  },
-  watch: {
-    '$route.query.productId'(newVal) {
-      if (newVal) {
-        this.selectedProductId = parseInt(newVal);
-        this.loadProductData();
-      }
-    }
   },
   methods: {
     getWordColor(index, type) {
@@ -341,7 +400,7 @@ export default {
         console.warn('pieChartInstance 不存在');
         return;
       }
-      
+
       const option = {
         tooltip: {
           trigger: 'item',
@@ -545,11 +604,17 @@ export default {
       this.trendChartInstance.setOption(option, true);
     },
 
+    buildQueryParams() {
+      const params = new URLSearchParams();
+      if (this.manageUserId) params.append('manageUserId', this.manageUserId);
+      return params.toString();
+    },
+
     async loadProducts() {
       try {
-        const res = await fetch('/api/product/list');
-        if (!res.ok) throw new Error('加载失败');
-        this.products = await res.json();
+        const query = this.buildQueryParams();
+        const data = await apiRequest(`/product/list${query ? '?' + query : ''}`);
+        this.products = data || [];
       } catch (err) {
         this.error = '加载商品列表失败：' + err.message;
       }
@@ -563,34 +628,27 @@ export default {
       this.disposeCharts();
 
       try {
-        let url = `/api/review/overview/${this.selectedProductId}`;
-        const params = [];
-        if (this.startDate) {
-          params.push(`startTime=${this.startDate}T00:00:00`);
-        }
-        if (this.endDate) {
-          params.push(`endTime=${this.endDate}T23:59:59`);
-        }
-        if (params.length) {
-          url += '?' + params.join('&');
-        }
-
+        const buildUrl = (base, extraParams = '') => {
+          const params = [];
+          if (this.manageUserId) params.push(`manageUserId=${this.manageUserId}`);
+          if (extraParams) params.push(extraParams);
+          return base + (params.length > 0 ? '?' + params.join('&') : '');
+        };
+        
         const [overviewRes, weeklyRes, wordcloudRes, keywordRes] = await Promise.all([
-          fetch(url),
-          fetch(`/api/review/weekly/${this.selectedProductId}?weeks=8`),
-          fetch(`/api/review/wordcloud/${this.selectedProductId}?topN=30`),
-          fetch(`/api/review/keyword-attribution/${this.selectedProductId}?topN=15`)
+          apiRequest(buildUrl(`/review/overview/${this.selectedProductId}`)),
+          apiRequest(buildUrl(`/review/weekly/${this.selectedProductId}`, 'weeks=8')),
+          apiRequest(buildUrl(`/review/wordcloud/${this.selectedProductId}`, 'topN=30')),
+          apiRequest(buildUrl(`/review/keyword-attribution/${this.selectedProductId}`, 'topN=15'))
         ]);
 
-        if (!overviewRes.ok) throw new Error('加载概览失败');
-        this.overview = await overviewRes.json();
+        this.overview = overviewRes;
         console.log('overview数据:', this.overview);
 
-        if (weeklyRes.ok) {
-          const raw = await weeklyRes.json();
-          const weeks = raw.weeks || [];
-          const posList = raw.positive || [];
-          const negList = raw.negative || [];
+        if (weeklyRes.weeks) {
+          const weeks = weeklyRes.weeks || [];
+          const posList = weeklyRes.positive || [];
+          const negList = weeklyRes.negative || [];
           this.weeklyData = weeks.map((date, i) => ({
             date,
             positive: posList[i] ?? 0,
@@ -601,31 +659,21 @@ export default {
           this.weeklyData = [];
         }
 
-        if (wordcloudRes.ok) {
-          const wordcloudData = await wordcloudRes.json();
-          const positive = wordcloudData.positive || [];
-          const negative = wordcloudData.negative || [];
-          const all = (wordcloudData.all && wordcloudData.all.length)
-            ? wordcloudData.all
-            : this.mergeWordCloudAll(positive, negative);
-          this.wordCloud = {
-            all: this.processWordCloud(all),
-            positive: this.processWordCloud(positive),
-            negative: this.processWordCloud(negative)
-          };
-        } else {
-          this.wordCloud = { all: [], positive: [], negative: [] };
-        }
+        const positive = wordcloudRes.positive || [];
+        const negative = wordcloudRes.negative || [];
+        const all = (wordcloudRes.all && wordcloudRes.all.length)
+          ? wordcloudRes.all
+          : this.mergeWordCloudAll(positive, negative);
+        this.wordCloud = {
+          all: this.processWordCloud(all),
+          positive: this.processWordCloud(positive),
+          negative: this.processWordCloud(negative)
+        };
 
-        if (keywordRes.ok) {
-          const keywordData = await keywordRes.json();
-          this.keywordAttribution = {
-            positive: (keywordData.positive_keywords || []).slice(0, 5),
-            negative: (keywordData.negative_keywords || []).slice(0, 5)
-          };
-        } else {
-          this.keywordAttribution = { positive: [], negative: [] };
-        }
+        this.keywordAttribution = {
+          positive: (keywordRes.positive_keywords || []).slice(0, 5),
+          negative: (keywordRes.negative_keywords || []).slice(0, 5)
+        };
 
         await this.$nextTick();
         console.log('DOM 更新完成，准备初始化图表');
@@ -695,11 +743,9 @@ export default {
   align-items: flex-end;
 }
 
-.filter-item {
+.filter-actions {
   display: flex;
-  flex-direction: column;
   gap: var(--space-2);
-  min-width: 150px;
 }
 
 .stats-grid {
@@ -747,8 +793,8 @@ export default {
 
 .chart-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-4);
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-6);
 }
 
 .chart-card {
@@ -764,61 +810,51 @@ export default {
 
 .chart-card h4 {
   margin: 0 0 var(--space-4) 0;
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
+  font-size: var(--font-size-md);
+  color: var(--text-primary);
 }
 
 .pie-chart-wrapper,
 .bar-chart-wrapper,
 .trend-chart-wrapper {
   width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
-.pie-chart-container,
+.pie-chart-container {
+  height: 300px;
+}
+
 .bar-chart-container {
-  width: 100%;
-  height: 220px;
-  background: #1a1a1a;
-  border-radius: 8px;
+  height: 300px;
 }
 
 .trend-chart-container {
-  width: 100%;
-  height: 280px;
-  background: #1a1a1a;
-  border-radius: 8px;
+  height: 300px;
 }
 
 .wordcloud-section {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-6);
 }
 
 .wordcloud-container {
-  min-height: 200px;
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
   justify-content: center;
-  gap: var(--space-3) var(--space-4);
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 150px;
   padding: var(--space-4);
-  background: var(--input-bg);
-  border-radius: var(--radius-sm);
 }
 
 .wordcloud-container.small {
-  min-height: 150px;
+  min-height: 120px;
 }
 
 .wordcloud-item {
-  display: inline-block;
-  transition: transform 0.2s ease;
   cursor: default;
+  transition: transform 0.2s;
 }
 
 .wordcloud-item:hover {
@@ -827,20 +863,19 @@ export default {
 
 .keyword-section {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, 1fr);
   gap: var(--space-6);
 }
 
 .keyword-column {
-  background: var(--input-bg);
-  border-radius: var(--radius-sm);
-  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
 }
 
 .keyword-title {
-  margin: 0 0 var(--space-4) 0;
+  margin: 0;
   font-size: var(--font-size-base);
-  font-weight: 600;
 }
 
 .keyword-title.positive {
@@ -858,87 +893,46 @@ export default {
 }
 
 .keyword-item {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2);
-  background: var(--card-bg);
+  background: var(--input-bg);
+  padding: var(--space-3);
   border-radius: var(--radius-sm);
 }
 
 .keyword-text {
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-primary);
-  font-size: var(--font-size-sm);
 }
 
 .keyword-count {
-  background: var(--border-color);
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-size: 11px;
-  color: var(--text-secondary);
+  margin-left: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
 }
 
 .keyword-examples {
-  width: 100%;
+  margin-top: var(--space-2);
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 4px;
+  gap: var(--space-1);
 }
 
 .example-tag {
-  font-size: 11px;
-  background: var(--input-bg);
+  background: var(--border-color);
   padding: 2px 6px;
   border-radius: 4px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  max-width: 150px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.example-tag:hover {
-  background: var(--border-color);
-}
-
-.loading-state {
-  text-align: center;
-  padding: var(--space-10);
+  font-size: var(--font-size-xs);
   color: var(--text-secondary);
 }
 
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid rgba(76, 175, 80, 0.3);
-  border-top-color: var(--primary-color);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto var(--space-4);
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
+.loading-state,
 .empty-state {
   text-align: center;
   padding: var(--space-10);
   color: var(--text-muted);
 }
 
-.alert-error {
-  background: rgba(244, 67, 54, 0.1);
-  color: #ef5350;
-  padding: var(--space-3);
-  border-radius: var(--radius-sm);
-  margin-top: var(--space-4);
-  border-left: 4px solid var(--danger-color);
+.select-field {
+  min-width: 150px;
 }
 
 @media (max-width: 768px) {

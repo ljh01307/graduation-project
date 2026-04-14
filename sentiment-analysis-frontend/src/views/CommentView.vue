@@ -7,7 +7,7 @@
       <div class="filter-row">
         <div class="filter-item">
           <label>选择商品</label>
-          <select v-model="filters.productId" @change="loadReviews" class="select-field">
+          <select v-model="filters.productId" @change="onFilterChange" class="select-field">
             <option value="">全部商品</option>
             <option v-for="p in products" :key="p.id" :value="p.id">
               {{ p.category }}
@@ -16,7 +16,7 @@
         </div>
         <div class="filter-item">
           <label>情感标签</label>
-          <select v-model="filters.sentimentLabel" @change="loadReviews" class="select-field">
+          <select v-model="filters.sentimentLabel" @change="onFilterChange" class="select-field">
             <option value="">全部</option>
             <option :value="1">正面</option>
             <option :value="0">负面</option>
@@ -24,28 +24,28 @@
         </div>
         <div class="filter-item">
           <label>开始时间</label>
-          <input v-model="filters.startDate" type="date" @change="loadReviews" class="input-field" />
+          <input v-model="filters.startDate" type="date" @change="onFilterChange" class="input-field" />
         </div>
         <div class="filter-item">
           <label>结束时间</label>
-          <input v-model="filters.endDate" type="date" @change="loadReviews" class="input-field" />
+          <input v-model="filters.endDate" type="date" @change="onFilterChange" class="input-field" />
         </div>
         <div class="filter-item">
           <label>排序</label>
-          <select v-model="filters.sortBy" @change="loadReviews" class="select-field">
+          <select v-model="filters.sortBy" @change="onFilterChange" class="select-field">
             <option value="uploadTime">上传时间</option>
             <option value="confidence">置信度</option>
           </select>
         </div>
         <div class="filter-item">
           <label>顺序</label>
-          <select v-model="filters.sortDir" @change="loadReviews" class="select-field">
+          <select v-model="filters.sortDir" @change="onFilterChange" class="select-field">
             <option value="DESC">降序</option>
             <option value="ASC">升序</option>
           </select>
         </div>
         <div class="filter-item filter-actions">
-          <button @click="resetFilters" class="btn btn-secondary">重置</button>
+          <button @click="resetFilters" class="btn btn-secondary"><IconRefresh /> 重置</button>
         </div>
       </div>
     </div>
@@ -63,9 +63,9 @@
             class="btn btn-primary btn-sm"
             :disabled="analyzing"
           >
-            {{ analyzing ? '分析中...' : '分析待审核' }}
+            <IconChart v-if="!analyzing" /> {{ analyzing ? '分析中...' : '启动分类' }}
           </button>
-          <button @click="showUploadModal = true" class="btn btn-outline btn-sm">上传评论</button>
+          <button @click="showUploadModal = true" class="btn btn-outline btn-sm"><IconUpload /> 上传评论</button>
         </div>
       </div>
 
@@ -86,7 +86,7 @@
             <th>情感标签</th>
             <th>置信度</th>
             <th>上传时间</th>
-            <th class="col-actions">操作</th>
+            <th class="col-actions">编辑</th>
           </tr>
         </thead>
         <tbody>
@@ -108,16 +108,16 @@
             <td>{{ formatDate(review.uploadTime) }}</td>
             <td class="actions-cell">
               <div class="dropdown" :class="{ 'dropdown-open': openDropdownId === review.id }">
-                <button @click="toggleDropdown(review.id)" class="btn btn-outline btn-sm dropdown-btn">
-                  操作 ▼
+                <button @click="toggleDropdown(review.id)" class="btn btn-outline btn-sm dropdown-btn icon-only" title="^_^">
+                  <IconEdit />
                 </button>
                 <div class="dropdown-menu">
                   <button @click="openEditModal(review); closeDropdown()" class="dropdown-item">
-                    ✏️ 修正标签
+                    <IconEdit /> 修正标签
                   </button>
                   <div class="dropdown-divider"></div>
-                  <button @click="deleteReview(review.id); closeDropdown()" class="dropdown-item dropdown-danger">
-                    🗑️ 删除
+                  <button @click="deleteReview(review.id); closeDropdown()" class="dropdown-item danger">
+                    <IconTrash /> 删除
                   </button>
                 </div>
               </div>
@@ -127,8 +127,8 @@
       </table>
 
       <div v-if="pagination.totalPages > 1" class="pagination">
-        <button 
-          @click="goToPage(pagination.currentPage - 1)" 
+        <button
+          @click="goToPage(pagination.currentPage - 1)"
           :disabled="pagination.currentPage === 0"
           class="btn btn-secondary btn-sm"
         >
@@ -137,8 +137,8 @@
         <span class="page-info">
           第 {{ pagination.currentPage + 1 }} 页 / 共 {{ pagination.totalPages }} 页
         </span>
-        <button 
-          @click="goToPage(pagination.currentPage + 1)" 
+        <button
+          @click="goToPage(pagination.currentPage + 1)"
           :disabled="pagination.currentPage >= pagination.totalPages - 1"
           class="btn btn-secondary btn-sm"
         >
@@ -163,7 +163,7 @@
         </div>
         <div class="modal-body">
           <div class="upload-section">
-            <label>选择商品 *</label>
+            <label>选择商品</label>
             <select v-model="uploadForm.productId" class="select-field">
               <option value="">请选择商品</option>
               <option v-for="p in products" :key="p.id" :value="p.id">
@@ -172,20 +172,20 @@
             </select>
           </div>
           <div class="upload-tabs">
-            <button 
-              @click="uploadTab = 'text'" 
+            <button
+              @click="uploadTab = 'text'"
               :class="['tab-btn', uploadTab === 'text' ? 'active' : '']"
             >
               文本输入
             </button>
-            <button 
-              @click="uploadTab = 'csv'" 
+            <button
+              @click="uploadTab = 'csv'"
               :class="['tab-btn', uploadTab === 'csv' ? 'active' : '']"
             >
               CSV上传
             </button>
-            <button 
-              @click="uploadTab = 'json'" 
+            <button
+              @click="uploadTab = 'json'"
               :class="['tab-btn', uploadTab === 'json' ? 'active' : '']"
             >
               JSON上传
@@ -245,8 +245,73 @@
 </template>
 
 <script>
+import { getToken } from '../utils/auth.js';
+import IconRefresh from '../components/icons/IconRefresh.vue';
+import IconChart from '../components/icons/IconChart.vue';
+import IconUpload from '../components/icons/IconUpload.vue';
+import IconEdit from '../components/icons/IconEdit.vue';
+import IconTrash from '../components/icons/IconTrash.vue';
+
+const API_BASE = '/api';
+
+async function apiRequest(url, options = {}) {
+  const token = getToken();
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token && { 'Authorization': `Bearer ${token}` }),
+    ...options.headers
+  };
+
+  if (options.body instanceof FormData) {
+    delete headers['Content-Type'];
+  }
+
+  const response = await fetch(`${API_BASE}${url}`, {
+    ...options,
+    headers
+  });
+
+  const contentType = response.headers.get('content-type');
+  let data;
+  if (contentType && contentType.includes('application/json')) {
+    data = await response.json();
+  } else {
+    const text = await response.text();
+    if (!response.ok) {
+      throw new Error(text || '请求失败');
+    }
+    return text;
+  }
+
+  if (!response.ok) {
+    throw new Error(data.message || '请求失败');
+  }
+
+  if (data && typeof data === 'object' && 'code' in data && 'data' in data) {
+    if (data.code !== 200) {
+      throw new Error(data.message || '请求失败');
+    }
+    return data.data;
+  }
+
+  return data;
+}
+
 export default {
   name: 'CommentView',
+  components: {
+    IconRefresh,
+    IconChart,
+    IconUpload,
+    IconEdit,
+    IconTrash
+  },
+  props: {
+    manageUserId: {
+      type: Number,
+      default: null
+    }
+  },
   data() {
     return {
       products: [],
@@ -285,6 +350,21 @@ export default {
       openDropdownId: null
     };
   },
+  watch: {
+    manageUserId: {
+      handler() {
+        this.loadProducts();
+        this.loadReviews();
+        this.loadUnanalyzedCount();
+      }
+    },
+    '$route.query.productId'(newVal) {
+      if (newVal) {
+        this.filters.productId = parseInt(newVal);
+        this.loadReviews();
+      }
+    }
+  },
   async mounted() {
     await this.loadProducts();
     const productId = this.$route.query.productId;
@@ -293,14 +373,6 @@ export default {
     }
     await this.loadReviews();
     await this.loadUnanalyzedCount();
-  },
-  watch: {
-    '$route.query.productId'(newVal) {
-      if (newVal) {
-        this.filters.productId = parseInt(newVal);
-        this.loadReviews();
-      }
-    }
   },
   methods: {
     formatDate(dateStr) {
@@ -315,13 +387,35 @@ export default {
       setTimeout(() => this.message = '', 3000);
     },
 
+    buildQueryString() {
+      const params = new URLSearchParams();
+      if (this.manageUserId) params.append('manageUserId', this.manageUserId);
+      params.append('page', this.pagination.currentPage);
+      params.append('size', this.pagination.size);
+      params.append('sortBy', this.filters.sortBy);
+      params.append('sortDir', this.filters.sortDir);
+      if (this.filters.productId) params.append('productId', this.filters.productId);
+      if (this.filters.sentimentLabel !== '') params.append('sentimentLabel', this.filters.sentimentLabel);
+      if (this.filters.startDate) params.append('startTime', `${this.filters.startDate}T00:00:00`);
+      if (this.filters.endDate) params.append('endTime', `${this.filters.endDate}T23:59:59`);
+      return params.toString();
+    },
+
     async loadProducts() {
       try {
-        const res = await fetch('/api/product/list');
-        this.products = await res.json();
+        const params = new URLSearchParams();
+        if (this.manageUserId) params.append('manageUserId', this.manageUserId);
+        const query = params.toString() ? '?' + params.toString() : '';
+        const data = await apiRequest(`/product/list${query}`);
+        this.products = data || [];
       } catch (err) {
         this.error = '加载商品失败：' + err.message;
       }
+    },
+
+    onFilterChange() {
+      this.pagination.currentPage = 0;
+      this.loadReviews();
     },
 
     resetFilters() {
@@ -340,29 +434,11 @@ export default {
 
     async loadReviews() {
       this.loading = true;
+      this.error = null;
       try {
-        let url = `/api/review/list-all?`;
-        url += `page=${this.pagination.currentPage}`;
-        url += `&size=${this.pagination.size}`;
-        url += `&sortBy=${this.filters.sortBy}`;
-        url += `&sortDir=${this.filters.sortDir}`;
-        
-        if (this.filters.productId) {
-          url += `&productId=${this.filters.productId}`;
-        }
-        if (this.filters.sentimentLabel !== '') {
-          url += `&sentimentLabel=${this.filters.sentimentLabel}`;
-        }
-        if (this.filters.startDate) {
-          url += `&startTime=${this.filters.startDate}T00:00:00`;
-        }
-        if (this.filters.endDate) {
-          url += `&endTime=${this.filters.endDate}T23:59:59`;
-        }
+        const queryString = this.buildQueryString();
+        const data = await apiRequest(`/review/list-all?${queryString}`);
 
-        const res = await fetch(url);
-        const data = await res.json();
-        
         this.reviews = data.reviews || [];
         this.pagination.totalElements = data.totalElements || 0;
         this.pagination.totalPages = data.totalPages || 0;
@@ -382,13 +458,15 @@ export default {
 
     async loadUnanalyzedCount() {
       try {
-        let url = '/api/review/unanalyzed-count';
+        let url = '/review/unanalyzed-count';
         if (this.filters.productId) {
           url += `/${this.filters.productId}`;
         }
-        const res = await fetch(url);
-        const data = await res.json();
-        this.unanalyzedCount = data.count || 0;
+        const params = new URLSearchParams();
+        if (this.manageUserId) params.append('manageUserId', this.manageUserId);
+        const query = params.toString() ? '?' + params.toString() : '';
+        const data = await apiRequest(`${url}${query}`);
+        this.unanalyzedCount = typeof data === 'number' ? data : (data.count || 0);
       } catch (err) {
         console.error('加载未分析数量失败:', err);
       }
@@ -396,16 +474,18 @@ export default {
 
     async analyzeReviews() {
       if (this.analyzing) return;
-      
+
       this.analyzing = true;
       try {
-        let url = '/api/review/analyze-all';
+        let url = '/review/analyze-all';
         if (this.filters.productId) {
-          url = `/api/review/analyze/${this.filters.productId}`;
+          url = `/review/analyze/${this.filters.productId}`;
         }
-        const res = await fetch(url, { method: 'POST' });
-        const result = await res.text();
-        this.showMessage(result, 'success');
+        const params = new URLSearchParams();
+        if (this.manageUserId) params.append('manageUserId', this.manageUserId);
+        const query = params.toString() ? '?' + params.toString() : '';
+        await apiRequest(`${url}${query}`, { method: 'POST' });
+        this.showMessage('分析任务已启动，请稍后查看结果', 'success');
         await this.loadReviews();
         await this.loadUnanalyzedCount();
       } catch (err) {
@@ -437,29 +517,26 @@ export default {
       const lines = this.uploadForm.reviewText.split('\n')
         .map(line => line.trim())
         .filter(line => line);
-        
+
       if (!lines.length) {
         this.error = '请输入评论';
         return;
       }
 
       try {
-        const res = await fetch('/api/review/upload', {
+        const params = new URLSearchParams();
+        if (this.manageUserId) params.append('manageUserId', this.manageUserId);
+        const query = params.toString() ? '?' + params.toString() : '';
+        await apiRequest(`/review/upload${query}`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             productId: this.uploadForm.productId,
             contents: lines
           })
         });
-        
-        if (res.ok) {
-          this.showMessage(`上传成功，共 ${lines.length} 条评论`);
-          this.closeUploadModal();
-          this.loadReviews();
-        } else {
-          throw new Error('上传失败');
-        }
+        this.showMessage(`上传成功，共 ${lines.length} 条评论`);
+        this.closeUploadModal();
+        this.loadReviews();
       } catch (err) {
         this.error = '上传失败：' + err.message;
       }
@@ -469,17 +546,22 @@ export default {
       const formData = new FormData();
       formData.append('file', this.uploadForm.csvFile);
       formData.append('productId', this.uploadForm.productId);
+      if (this.manageUserId) formData.append('manageUserId', this.manageUserId);
 
       try {
-        const res = await fetch('/api/review/upload/csv', {
+        const token = getToken();
+        const response = await fetch(`${API_BASE}/review/upload/csv`, {
           method: 'POST',
+          headers: {
+            ...(token && { 'Authorization': `Bearer ${token}` })
+          },
           body: formData
         });
 
-        const data = await res.json();
-        
+        const data = await response.json();
+
         if (data.code === 200) {
-          this.showMessage(`上传成功，共导入 ${data.count || 0} 条评论`);
+          this.showMessage(`上传成功，共导入 ${data.data || 0} 条评论`);
           this.closeUploadModal();
           this.loadReviews();
         } else {
@@ -495,7 +577,7 @@ export default {
       reader.onload = async (e) => {
         try {
           const jsonData = JSON.parse(e.target.result);
-          
+
           let contents = [];
           if (Array.isArray(jsonData)) {
             contents = jsonData;
@@ -514,22 +596,20 @@ export default {
             return;
           }
 
-          const res = await fetch('/api/review/upload', {
+          const params = new URLSearchParams();
+          if (this.manageUserId) params.append('manageUserId', this.manageUserId);
+          const query = params.toString() ? '?' + params.toString() : '';
+          await apiRequest(`/review/upload${query}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               productId: this.uploadForm.productId,
               contents: contents
             })
           });
 
-          if (res.ok) {
-            this.showMessage(`上传成功，共 ${contents.length} 条评论`);
-            this.closeUploadModal();
-            this.loadReviews();
-          } else {
-            throw new Error('上传失败');
-          }
+          this.showMessage(`上传成功，共 ${contents.length} 条评论`);
+          this.closeUploadModal();
+          this.loadReviews();
         } catch (err) {
           this.error = '解析JSON失败：' + err.message;
         }
@@ -550,43 +630,34 @@ export default {
 
     async saveSentimentEdit() {
       try {
-        const res = await fetch(`/api/review/update-sentiment/${this.editingReview.id}`, {
+        const params = new URLSearchParams();
+        if (this.manageUserId) params.append('manageUserId', this.manageUserId);
+        const query = params.toString() ? '?' + params.toString() : '';
+        await apiRequest(`/review/update-sentiment/${this.editingReview.id}${query}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ sentimentLabel: this.editingSentiment })
         });
-
-        if (res.ok) {
-          this.showMessage('修正成功');
-          this.closeEditModal();
-          this.loadReviews();
-        } else {
-          throw new Error('修正失败');
-        }
+        this.showMessage('修正成功');
+        this.closeEditModal();
+        this.loadReviews();
       } catch (err) {
         this.error = '修正失败：' + err.message;
       }
     },
 
-    deleteReview(id) {
+    async deleteReview(id) {
       if (!confirm('确定删除这条评论？')) return;
 
-      (async () => {
-        try {
-          const res = await fetch(`/api/review/delete/${id}`, {
-            method: 'DELETE'
-          });
-
-          if (res.ok) {
-            this.showMessage('删除成功');
-            this.loadReviews();
-          } else {
-            throw new Error('删除失败');
-          }
-        } catch (err) {
-          this.error = '删除失败：' + err.message;
-        }
-      })();
+      try {
+        const params = new URLSearchParams();
+        if (this.manageUserId) params.append('manageUserId', this.manageUserId);
+        const query = params.toString() ? '?' + params.toString() : '';
+        await apiRequest(`/review/delete/${id}${query}`, { method: 'DELETE' });
+        this.showMessage('删除成功');
+        this.loadReviews();
+      } catch (err) {
+        this.error = '删除失败：' + err.message;
+      }
     },
 
     toggleDropdown(id) {
@@ -640,129 +711,41 @@ export default {
 }
 
 .tag-positive {
-  background: rgba(76, 175, 80, 0.15);
-  color: var(--primary-color);
+  background-color: var(--primary-color);
+  color: white;
+  padding: 6px 14px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
 }
 
 .tag-negative {
-  background: rgba(244, 67, 54, 0.15);
-  color: var(--danger-color);
+  background-color: var(--danger-color);
+  color: white;
+  padding: 6px 14px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
 }
 
 .tag-pending {
-  background: rgba(158, 158, 158, 0.15);
-  color: #9e9e9e;
-}
-
-.alert-error {
-  background: rgba(244, 67, 54, 0.1);
-  color: #ef5350;
-  padding: var(--space-3);
-  border-radius: var(--radius-sm);
-  margin-top: var(--space-4);
-  border-left: 4px solid var(--danger-color);
-}
-
-.alert-success {
-  padding: var(--space-3);
-  border-radius: var(--radius-sm);
-  margin-top: var(--space-4);
-  background: rgba(76, 175, 80, 0.15);
-  color: var(--primary-color);
-  border-left: 4px solid var(--primary-color);
-}
-
-.modal-large {
-  min-width: 600px;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-4);
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 24px;
+  background-color: var(--input-bg);
   color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.close-btn:hover {
-  color: var(--text-primary);
-}
-
-.modal-body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-.upload-tabs {
-  display: flex;
-  gap: var(--space-2);
-}
-
-.tab-btn {
-  flex: 1;
-  padding: var(--space-2);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  background: var(--input-bg);
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.tab-btn.active {
-  background: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
-}
-
-.upload-section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.upload-section > label {
+  padding: 6px 14px;
+  border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-}
-
-.textarea-field {
-  width: 100%;
-  padding: var(--space-3);
+  font-weight: 500;
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  background: var(--input-bg);
-  color: var(--text-primary);
-  resize: vertical;
-  box-sizing: border-box;
-}
-
-.file-input {
-  padding: var(--space-2);
-  color: var(--text-primary);
-}
-
-.file-name {
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
-  margin: 0;
 }
 
 .review-preview {
-  background: var(--input-bg);
+  background-color: var(--input-bg);
   padding: var(--space-3);
   border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-size: var(--font-size-sm);
   margin-bottom: var(--space-4);
-  word-break: break-all;
+  max-height: 100px;
+  overflow-y: auto;
+  color: var(--text-secondary);
 }
 
 .sentiment-options {
@@ -776,12 +759,11 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
   padding: var(--space-3);
   border: 2px solid var(--border-color);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-fast);
 }
 
 .option-btn input {
@@ -790,13 +772,113 @@ export default {
 
 .option-btn.active.positive {
   border-color: var(--primary-color);
-  background: rgba(76, 175, 80, 0.1);
+  background-color: rgba(76, 175, 80, 0.1);
   color: var(--primary-color);
 }
 
 .option-btn.active.negative {
   border-color: var(--danger-color);
-  background: rgba(244, 67, 54, 0.1);
+  background-color: rgba(244, 67, 54, 0.1);
   color: var(--danger-color);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.close-btn:hover {
+  color: var(--text-primary);
+}
+
+.modal-body {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.upload-tabs {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.tab-btn {
+  flex: 1;
+  padding: var(--space-2) var(--space-4);
+  background-color: var(--input-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.tab-btn.active {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+.upload-section {
+  margin-bottom: var(--space-4);
+}
+
+.textarea-field {
+  width: 100%;
+  padding: var(--space-3);
+  background-color: var(--input-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: inherit;
+  resize: vertical;
+  margin-bottom: var(--space-3);
+}
+
+.file-input {
+  display: block;
+  margin-bottom: var(--space-2);
+}
+
+.file-name {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-2);
+}
+
+.select-field {
+  min-width: 120px;
+}
+
+.filter-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.card-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.dropdown-btn.icon-only {
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dropdown-btn.icon-only svg {
+  width: 16px;
+  height: 16px;
 }
 </style>

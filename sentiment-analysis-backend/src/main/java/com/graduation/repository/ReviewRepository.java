@@ -12,21 +12,22 @@ import java.util.List;
 
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long> {
-    
+
     @Query("SELECT r FROM Review r WHERE r.product.id = :productId")
     List<Review> findByProductId(@Param("productId") Long productId);
-    
+
     @Query("SELECT r FROM Review r WHERE r.product.id = :productId AND r.analyzed = :analyzed")
     List<Review> findByProductIdAndAnalyzed(@Param("productId") Long productId, @Param("analyzed") Boolean analyzed);
-    
-    List<Review> findByAnalyzed(Boolean analyzed);
-    
+
+    @Query("SELECT r FROM Review r WHERE r.product.user.id = :userId AND r.analyzed = :analyzed")
+    List<Review> findByUserIdAndAnalyzed(@Param("userId") Long userId, @Param("analyzed") Boolean analyzed);
+
     @Query("SELECT r FROM Review r WHERE r.product.id = :productId")
     Page<Review> findByProductId(@Param("productId") Long productId, Pageable pageable);
-    
+
     @Query("SELECT r FROM Review r WHERE r.product.id = :productId AND r.sentimentLabel = :sentimentLabel")
     Page<Review> findByProductIdAndSentimentLabel(@Param("productId") Long productId, @Param("sentimentLabel") Integer sentimentLabel, Pageable pageable);
-    
+
     @Query("SELECT r FROM Review r WHERE r.product.id = :productId " +
            "AND (:sentimentLabel IS NULL OR r.sentimentLabel = :sentimentLabel) " +
            "AND (:startTime IS NULL OR r.uploadTime >= :startTime) " +
@@ -39,31 +40,32 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
         Pageable pageable
     );
 
-    @Query("SELECT r FROM Review r WHERE 1=1 " +
+    @Query("SELECT r FROM Review r WHERE r.product.user.id = :userId " +
            "AND (:sentimentLabel IS NULL OR r.sentimentLabel = :sentimentLabel) " +
            "AND (:startTime IS NULL OR r.uploadTime >= :startTime) " +
            "AND (:endTime IS NULL OR r.uploadTime <= :endTime)")
     Page<Review> findAllFilters(
+        @Param("userId") Long userId,
         @Param("sentimentLabel") Integer sentimentLabel,
         @Param("startTime") LocalDateTime startTime,
         @Param("endTime") LocalDateTime endTime,
         Pageable pageable
     );
-    
+
     @Query("SELECT COUNT(r) FROM Review r WHERE r.product.id = :productId")
     long countByProductId(@Param("productId") Long productId);
-    
+
     @Query("SELECT COUNT(r) FROM Review r WHERE r.product.id = :productId AND r.sentimentLabel = 1 AND r.analyzed = true")
     long countPositiveByProductId(@Param("productId") Long productId);
-    
+
     @Query("SELECT COUNT(r) FROM Review r WHERE r.product.id = :productId AND r.sentimentLabel = 0 AND r.analyzed = true")
     long countNegativeByProductId(@Param("productId") Long productId);
 
     @Query("SELECT COUNT(r) FROM Review r WHERE r.product.id = :productId AND r.analyzed = false")
     long countUnanalyzedByProductId(@Param("productId") Long productId);
 
-    @Query("SELECT COUNT(r) FROM Review r WHERE r.analyzed = false")
-    long countUnanalyzedAll();
+    @Query("SELECT COUNT(r) FROM Review r WHERE r.product.user.id = :userId AND r.analyzed = false")
+    long countUnanalyzedAll(@Param("userId") Long userId);
 
     @Query("SELECT r FROM Review r WHERE r.product.id = :productId AND r.uploadTime BETWEEN :startTime AND :endTime")
     List<Review> findByProductIdAndUploadTimeBetween(

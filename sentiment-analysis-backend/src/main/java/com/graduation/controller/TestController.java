@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
 
-@CrossOrigin // 允许所有来源（仅开发用！）
+//@CrossOrigin // 允许所有来源（仅开发用！）
 @RestController
 @RequestMapping("/api/test")
 public class TestController {
