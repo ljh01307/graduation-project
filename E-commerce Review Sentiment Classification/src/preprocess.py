@@ -19,6 +19,7 @@ def clean_text(text: str) -> str:
     Returns:
         清洗后的文本
     """
+    # 处理缺失值
     if pd.isna(text):
         return ''
     
@@ -26,6 +27,9 @@ def clean_text(text: str) -> str:
     
     # 去除各类括号
     text = re.sub(r'[【\[\]（）()《》<>「」『』【】〔〕]', '', text)
+
+    # 去除标点
+    text = re.sub(r'[，。！？；：、""'']', '', text)
     
     # 去除英文和数字
     text = re.sub(r'[a-zA-Z0-9]', '', text)

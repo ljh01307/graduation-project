@@ -12,6 +12,5 @@ public class Application {
         // 启动 Spring Boot 容器，开启 Web 服务
         SpringApplication.run(Application.class, args);
         System.out.println("情感分析后端服务启动成功！");
-        // ============= 新增结束 =============
     }
 }
