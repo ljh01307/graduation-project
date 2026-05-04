@@ -55,11 +55,18 @@ public class ReviewController {
     @GetMapping("/weekly/{productId}")
     public GlobalResponse<?> getWeeklyStats(@PathVariable Long productId,
                                             @RequestParam(defaultValue = "4") int weeks,
+                                            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
+                                            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime,
                                             @RequestAttribute Long userId,
                                             @RequestAttribute String role,
                                             @RequestParam(required = false) Long manageUserId) {
         Long targetUserId = reviewService.resolveTargetUserId(userId, role, manageUserId);
-        Map<String, Object> data = reviewService.getWeeklyStats(productId, weeks, targetUserId);
+        Map<String, Object> data;
+        if (startTime != null && endTime != null) {
+            data = reviewService.getWeeklyStats(productId, startTime, endTime, targetUserId);
+        } else {
+            data = reviewService.getWeeklyStats(productId, weeks, targetUserId);
+        }
         return GlobalResponse.success(data);
     }
 

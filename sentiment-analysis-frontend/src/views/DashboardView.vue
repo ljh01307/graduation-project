@@ -16,11 +16,11 @@
         </div>
         <div class="filter-item">
           <label>开始时间</label>
-          <input v-model="startDate" type="date" class="input-field" />
+          <input v-model="startDate" type="date" @change="loadProductData" class="input-field" />
         </div>
         <div class="filter-item">
           <label>结束时间</label>
-          <input v-model="endDate" type="date" class="input-field" />
+          <input v-model="endDate" type="date" @change="loadProductData" class="input-field" />
         </div>
         <div class="filter-item filter-actions">
           <button @click="resetFilters" class="btn btn-secondary"><IconRefresh /> 重置</button>
@@ -631,13 +631,19 @@ export default {
         const buildUrl = (base, extraParams = '') => {
           const params = [];
           if (this.manageUserId) params.push(`manageUserId=${this.manageUserId}`);
+          if (this.startDate) params.push(`startTime=${this.startDate}T00:00:00`);
+          if (this.endDate) params.push(`endTime=${this.endDate}T23:59:59`);
           if (extraParams) params.push(extraParams);
           return base + (params.length > 0 ? '?' + params.join('&') : '');
         };
-        
+
+        const weeklyParams = (this.startDate || this.endDate)
+          ? ''
+          : 'weeks=8';
+
         const [overviewRes, weeklyRes, wordcloudRes, keywordRes] = await Promise.all([
           apiRequest(buildUrl(`/review/overview/${this.selectedProductId}`)),
-          apiRequest(buildUrl(`/review/weekly/${this.selectedProductId}`, 'weeks=8')),
+          apiRequest(buildUrl(`/review/weekly/${this.selectedProductId}`, weeklyParams)),
           apiRequest(buildUrl(`/review/wordcloud/${this.selectedProductId}`, 'topN=30')),
           apiRequest(buildUrl(`/review/keyword-attribution/${this.selectedProductId}`, 'topN=15'))
         ]);

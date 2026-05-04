@@ -205,6 +205,65 @@ public class ReviewService {
         return result;
     }
 
+    public Map<String, Object> getWeeklyStats(Long productId, LocalDateTime startTime, LocalDateTime endTime, Long userId) {
+        findProductWithUser(productId, userId);
+        List<Review> reviews;
+        if (startTime != null && endTime != null) {
+            reviews = reviewRepository.findByProductIdAndUploadTimeBetween(productId, startTime, endTime);
+        } else {
+            reviews = reviewRepository.findByProductId(productId);
+        }
+
+        List<Review> analyzedReviews = reviews.stream()
+                .filter(Review::getAnalyzed)
+                .collect(Collectors.toList());
+
+        Map<String, Map<String, Long>> weeklyStats = new LinkedHashMap<>();
+
+        LocalDateTime current = startTime.truncatedTo(ChronoUnit.DAYS);
+        LocalDateTime end = endTime.truncatedTo(ChronoUnit.DAYS);
+
+        while (!current.isAfter(end)) {
+            LocalDateTime weekStartRaw = current.with(DayOfWeek.MONDAY);
+            LocalDateTime weekEndRaw = weekStartRaw.plusDays(6).with(LocalTime.MAX);
+
+            final LocalDateTime weekStart = weekStartRaw.isBefore(startTime) ? startTime : weekStartRaw;
+            final LocalDateTime weekEnd = weekEndRaw.isAfter(endTime) ? endTime : weekEndRaw;
+
+            String weekLabel = weekStart.toLocalDate().format(DateTimeFormatter.ofPattern("MM.dd")) +
+                              " - " +
+                              weekEnd.toLocalDate().format(DateTimeFormatter.ofPattern("MM.dd"));
+
+            long positive = analyzedReviews.stream()
+                    .filter(r -> r.getAnalyzeTime() != null
+                              && !r.getAnalyzeTime().isBefore(weekStart)
+                              && !r.getAnalyzeTime().isAfter(weekEnd)
+                              && r.getSentimentLabel() == 1)
+                    .count();
+
+            long negative = analyzedReviews.stream()
+                    .filter(r -> r.getAnalyzeTime() != null
+                              && !r.getAnalyzeTime().isBefore(weekStart)
+                              && !r.getAnalyzeTime().isAfter(weekEnd)
+                              && r.getSentimentLabel() == 0)
+                    .count();
+
+            Map<String, Long> weekData = new HashMap<>();
+            weekData.put("positive", positive);
+            weekData.put("negative", negative);
+            weeklyStats.put(weekLabel, weekData);
+
+            current = weekStart.plusWeeks(1);
+        }
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("weeks", weeklyStats.keySet());
+        result.put("positive", weeklyStats.values().stream().map(m -> m.get("positive")).collect(Collectors.toList()));
+        result.put("negative", weeklyStats.values().stream().map(m -> m.get("negative")).collect(Collectors.toList()));
+
+        return result;
+    }
+
     public Map<String, Object> getWordCloudData(Long productId, int topN, Long userId) {
         findProductWithUser(productId, userId);
         List<Review> reviews = reviewRepository.findByProductId(productId);

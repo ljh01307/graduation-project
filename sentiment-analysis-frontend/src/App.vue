@@ -16,6 +16,22 @@
           <router-link to="/dashboard" class="nav-link"><IconChart class="nav-icon" />数据看板</router-link>
         </div>
         <div class="nav-right">
+          <button class="theme-toggle" @click="toggleTheme" :title="isDark ? '切换到浅色主题' : '切换到深色主题'">
+            <svg v-if="isDark" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          </button>
           <div class="user-dropdown" @click.stop @mouseenter="showDropdownWithDelay" @mouseleave="hideDropdownWithDelay">
             <button class="dropdown-toggle" type="button">
               <div class="user-avatar" :class="{ admin: isAdmin }">
@@ -96,6 +112,7 @@
 <script>
 import { getUserInfo, clearAuth, setUserInfo } from './utils/auth.js';
 import { updateUsername, updatePassword } from './utils/api.js';
+import { initTheme, toggleTheme as toggleThemeUtil, getTheme } from './utils/theme.js';
 import IconLogo from './components/icons/IconLogo.vue';
 import IconHome from './components/icons/IconHome.vue';
 import IconUsers from './components/icons/IconUsers.vue';
@@ -135,7 +152,8 @@ export default {
       newPassword: '',
       confirmPassword: '',
       modalError: '',
-      modalSuccess: ''
+      modalSuccess: '',
+      isDark: true
     };
   },
   computed: {
@@ -156,6 +174,8 @@ export default {
   },
   mounted() {
     this.loadUserInfo();
+    initTheme();
+    this.isDark = getTheme() === 'dark';
     document.addEventListener('click', this.handleClickOutside);
   },
   beforeUnmount() {
@@ -265,6 +285,10 @@ export default {
       this.showDropdown = false;
       clearAuth();
       this.$router.push('/login');
+    },
+    toggleTheme() {
+      const newTheme = toggleThemeUtil();
+      this.isDark = newTheme === 'dark';
     }
   }
 }
@@ -331,6 +355,39 @@ export default {
   /* 动效 */
   --transition-fast: 0.15s ease;
   --transition-normal: 0.25s ease;
+}
+
+/* ========== 浅色主题变量 ========== */
+[data-theme="light"] {
+  --bg-color: #f5f7fa;
+  --card-bg: #ffffff;
+  --input-bg: #f0f2f5;
+  --text-primary: #1a1a2e;
+  --text-secondary: #4a5568;
+  --text-muted: #a0aec0;
+  --border-color: #e2e8f0;
+  --divider-color: #e2e8f0;
+  --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* ========== 主题过渡动画 ========== */
+body,
+body *,
+body *::before,
+body *::after {
+  transition: background-color 0.5s ease,
+              color 0.5s ease,
+              border-color 0.5s ease,
+              box-shadow 0.5s ease;
+}
+
+/* 排除不需要过渡的元素，避免性能问题和交互延迟 */
+.modal-overlay,
+.dropdown-menu,
+.spinner,
+.spinner::before,
+.spinner::after {
+  transition: none !important;
 }
 
 /* ========== 全局样式 ========== */
@@ -433,7 +490,27 @@ body {
 .nav-right {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background-color: var(--input-bg);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.theme-toggle:hover {
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+  transform: rotate(15deg);
 }
 
 .user-info {

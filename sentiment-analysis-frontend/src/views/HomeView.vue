@@ -5,7 +5,7 @@
         <span class="logo-icon"><!-- logo --></span>
         <h1 class="logo-text">SentimentAI</h1>
       </div>
-      <p class="subtitle">基于深度学习的商品评论情感分析系统</p>
+      <p class="subtitle">基于机器学习的商品评论情感分类及可视化系统</p>
     </div>
 
     <div class="card">
