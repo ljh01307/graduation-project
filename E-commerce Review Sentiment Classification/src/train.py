@@ -37,7 +37,7 @@ def load_data(data_path: str) -> Tuple[np.ndarray, np.ndarray]:
         raise ValueError("数据文件必须包含 'review' 和 'label' 列")
 
     if 'cat' in df.columns:
-        df = df[df['cat'] != '书籍']
+        df = df[~df['cat'].isin(['书籍', '酒店'])]
 
     df = clean_data(df, review_col='review', label_col='label')
 
@@ -119,6 +119,7 @@ def extract_features_w2v(X_train: np.ndarray, X_test: np.ndarray,
         min_count=min_count,
         workers=-1,
         epochs=10,
+        sg=1,
         seed=42
     )
     print(f"词汇表大小: {len(w2v_model.wv)}")
