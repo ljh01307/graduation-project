@@ -2,6 +2,7 @@ package com.graduation.service;
 
 import com.graduation.entity.Product;
 import com.graduation.entity.User;
+import com.graduation.entity.Review;
 import com.graduation.repository.ProductRepository;
 import com.graduation.repository.ReviewRepository;
 import com.graduation.repository.UserRepository;
@@ -85,6 +86,12 @@ public class ProductService {
     public void deleteCategory(Long id, Long userId) {
         Product product = productRepository.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new RuntimeException("商品不存在或无权限"));
+
+        Long productId = product.getId();
+
+        List<Review> reviews = reviewRepository.findByProductId(productId);
+        reviewRepository.deleteAll(reviews);
+
         productRepository.delete(product);
     }
 }

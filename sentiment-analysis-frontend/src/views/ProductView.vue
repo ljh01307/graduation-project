@@ -114,6 +114,10 @@
       {{ error }}
     </div>
 
+    <div v-if="message" :class="['alert', messageType === 'error' ? 'alert-error' : 'alert-success']">
+      {{ message }}
+    </div>
+
     <div v-if="showAddModal" class="modal-overlay" @click.self="closeAddModal">
       <div class="modal">
         <div class="modal-header">
@@ -191,6 +195,8 @@ export default {
       newCategory: '',
       loading: false,
       error: null,
+      message: '',
+      messageType: 'success',
       showAddModal: false,
       showEditModal: false,
       editingProductId: null,
@@ -265,6 +271,12 @@ export default {
       return date.toLocaleString('zh-CN');
     },
 
+    showMessage(msg, type = 'success') {
+      this.message = msg;
+      this.messageType = type;
+      setTimeout(() => this.message = '', 3000);
+    },
+
     getRateClass(rate) {
       if (rate >= 80) return 'rate-tag-high';
       if (rate >= 50) return 'rate-tag-medium';
@@ -296,6 +308,7 @@ export default {
       try {
         await addProduct(category, this.manageUserId);
         this.newCategory = '';
+        this.showMessage('商品添加成功');
         await this.loadProducts();
         this.closeAddModal();
       } catch (err) {
@@ -343,6 +356,7 @@ export default {
 
       try {
         await updateProduct(this.editingProductId, category, this.manageUserId);
+        this.showMessage('商品更新成功');
         this.closeEditModal();
         await this.loadProducts();
       } catch (err) {
@@ -373,6 +387,7 @@ export default {
       this.error = null;
       try {
         await deleteProduct(id, this.manageUserId);
+        this.showMessage('商品删除成功');
         await this.loadProducts();
       } catch (err) {
         this.error = '删除商品失败：' + err.message;

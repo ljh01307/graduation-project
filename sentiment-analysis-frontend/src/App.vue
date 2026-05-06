@@ -5,7 +5,7 @@
         <div class="nav-left">
           <router-link to="/" class="nav-brand">
             <IconLogo class="nav-logo" />
-            <span class="nav-brand-title">SentimentAI</span>
+            <span class="nav-brand-title">浙江工业大学</span>
           </router-link>
         </div>
         <div class="nav-center">

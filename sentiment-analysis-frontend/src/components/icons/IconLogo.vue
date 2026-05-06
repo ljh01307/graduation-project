@@ -1,10 +1,23 @@
 <template>
-  <svg t="1776142824994" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="5683" width="48" height="48"><path d="M219.782369 731.737573A51.19552 51.19552 0 0 1 255.977602 716.737285h614.346245a51.19552 51.19552 0 0 0 51.19552-51.19552V153.586561a51.19552 51.19552 0 0 0-51.19552-51.19552H153.586561a51.19552 51.19552 0 0 0-51.19552 51.19552v695.54234l117.391328-117.391328zM277.172547 819.128326l-189.781794 189.781794C55.137575 1041.163298 0 1018.330096 0 972.714887V153.586561a153.586561 153.586561 0 0 1 153.586561-153.586561h716.737286a153.586561 153.586561 0 0 1 153.586561 153.586561v511.955204a153.586561 153.586561 0 0 1-153.586561 153.586561H277.172547z" fill="currentColor" p-id="5684">
-  </path>
-    <!-- 三条柱状图竖线 -->
-    <line x1="340" y1="600" x2="340" y2="500" stroke="currentColor" stroke-width="110" stroke-linecap="round"/>
-    <line x1="512" y1="600" x2="512" y2="400" stroke="currentColor" stroke-width="110" stroke-linecap="round"/>
-    <line x1="684" y1="600" x2="684" y2="300" stroke="currentColor" stroke-width="110" stroke-linecap="round"/>
-  </svg>
-    
+  <img :src="logoUrl" alt="ZJUT Logo" class="zjut-logo" />
 </template>
+
+<script>
+import logoUrl from '../../assets/ZJUT-logo.svg'
+
+export default {
+  data() {
+    return {
+      logoUrl
+    }
+  }
+}
+</script>
+
+<style scoped>
+.zjut-logo {
+  width: 48px;
+  height: 48px;
+  display: block;
+}
+</style>

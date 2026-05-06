@@ -2,8 +2,8 @@
   <div class="auth-container">
     <div class="auth-card">
       <div class="auth-brand">
-        <IconLogo class="brand-logo" />
-        <h1 class="brand-title">SentimentAI</h1>
+        <!-- <IconLogo class="brand-logo" /> -->
+        <h1 class="brand-title">商品评论情感分类可视化系统</h1>
       </div>
       <div class="auth-header">
         <h2 class="auth-title">用户注册</h2>

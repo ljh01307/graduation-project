@@ -1,8 +1,11 @@
 package com.graduation.service;
 
 import com.graduation.entity.User;
+import com.graduation.entity.Product;
+import com.graduation.entity.Review;
 import com.graduation.repository.UserRepository;
 import com.graduation.repository.ProductRepository;
+import com.graduation.repository.ReviewRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,6 +22,9 @@ public class UserService {
 
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private ReviewRepository reviewRepository;
 
     private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -88,6 +94,14 @@ public class UserService {
         if (!userRepository.existsById(userId)) {
             throw new RuntimeException("用户不存在");
         }
+
+        List<Product> products = productRepository.findByUserId(userId);
+        for (Product product : products) {
+            List<Review> reviews = reviewRepository.findByProductId(product.getId());
+            reviewRepository.deleteAll(reviews);
+        }
+        productRepository.deleteAll(products);
+
         userRepository.deleteById(userId);
     }
 

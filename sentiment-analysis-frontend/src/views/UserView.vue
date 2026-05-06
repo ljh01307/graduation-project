@@ -133,6 +133,10 @@
       {{ error }}
     </div>
 
+    <div v-if="message" :class="['alert', messageType === 'error' ? 'alert-error' : 'alert-success']">
+      {{ message }}
+    </div>
+
     <div v-if="showAddModal" class="modal-overlay" @click.self="closeAddModal">
       <div class="modal">
         <div class="modal-header">
@@ -228,6 +232,8 @@ export default {
       users: [],
       loading: false,
       error: null,
+      message: '',
+      messageType: 'success',
       showAddModal: false,
       showEditModal: false,
       editingUserId: null,
@@ -300,6 +306,12 @@ export default {
       return date.toLocaleString('zh-CN');
     },
 
+    showMessage(msg, type = 'success') {
+      this.message = msg;
+      this.messageType = type;
+      setTimeout(() => this.message = '', 3000);
+    },
+
     async loadUsers() {
       this.loading = true;
       this.error = null;
@@ -327,6 +339,7 @@ export default {
       this.error = null;
       try {
         await apiAddUser(this.addForm.username.trim(), this.addForm.password, this.addForm.role);
+        this.showMessage('用户添加成功');
         await this.loadUsers();
         this.closeAddModal();
       } catch (err) {
@@ -355,6 +368,7 @@ export default {
       this.error = null;
       try {
         await updateUser(this.editingUserId, this.editUsername.trim());
+        this.showMessage('用户更新成功');
         await this.loadUsers();
         this.closeEditModal();
       } catch (err) {
@@ -377,6 +391,7 @@ export default {
       this.error = null;
       try {
         await apiDeleteUser(id);
+        this.showMessage('删除用户成功');
         await this.loadUsers();
       } catch (err) {
         this.error = '删除用户失败：' + err.message;
