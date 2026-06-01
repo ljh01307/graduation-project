@@ -14,7 +14,11 @@ import org.apache.commons.csv.CSVRecord;
 
 import org.springframework.data.domain.Page;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -51,14 +55,29 @@ public class ReviewService {
                 .orElseThrow(() -> new RuntimeException("商品不存在或无权限"));
     }
 
+    private BufferedReader createReaderWithEncoding(InputStream is) throws Exception {
+        byte[] bytes = is.readAllBytes();
+
+        if (bytes.length >= 3 && bytes[0] == (byte)0xEF && bytes[1] == (byte)0xBB && bytes[2] == (byte)0xBF) {
+            bytes = java.util.Arrays.copyOfRange(bytes, 3, bytes.length);
+        }
+
+        return new BufferedReader(new InputStreamReader(new ByteArrayInputStream(bytes), StandardCharsets.UTF_8));
+    }
+
     public int uploadReviewsFromCSV(MultipartFile file, Long productId, Long userId) throws Exception {
         Product product = findProductWithUser(productId, userId);
 
         List<Review> reviews = new ArrayList<>();
 
-        try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(file.getInputStream(), "UTF-8"))) {
+        BufferedReader reader;
+        try {
+            reader = createReaderWithEncoding(file.getInputStream());
+        } catch (Exception e) {
+            reader = new BufferedReader(new InputStreamReader(file.getInputStream(), "GBK"));
+        }
 
+        try {
             CSVParser csvParser = CSVFormat.DEFAULT.builder()
                 .setHeader()
                 .setSkipHeaderRecord(true)
@@ -95,6 +114,8 @@ public class ReviewService {
             }
 
             csvParser.close();
+        } finally {
+            reader.close();
         }
 
         reviewRepository.saveAll(reviews);

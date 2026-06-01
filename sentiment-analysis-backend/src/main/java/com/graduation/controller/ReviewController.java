@@ -32,6 +32,22 @@ public class ReviewController {
         return GlobalResponse.success("评论上传成功", reviews);
     }
 
+    @PostMapping("/upload/csv")
+    public GlobalResponse<?> uploadReviewsCSV(@RequestParam("file") MultipartFile file,
+                                              @RequestParam Long productId,
+                                              @RequestAttribute Long userId,
+                                              @RequestAttribute String role,
+                                              @RequestParam(required = false) Long manageUserId) {
+        Long targetUserId = reviewService.resolveTargetUserId(userId, role, manageUserId);
+        int count;
+        try {
+            count = reviewService.uploadReviewsFromCSV(file, productId, targetUserId);
+        } catch (Exception e) {
+            throw new RuntimeException("CSV文件上传失败: " + e.getMessage(), e);
+        }
+        return GlobalResponse.success("成功上传" + count + "条评论", null);
+    }
+
     @PostMapping("/analyze/{productId}")
     public GlobalResponse<?> analyzeReviews(@PathVariable Long productId,
                                           @RequestAttribute Long userId,
